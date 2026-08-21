@@ -20,7 +20,7 @@ class LoginTestCase(unittest.TestCase):
 
         response = self.client.post('/login', data=dict(
             username='admin',
-            password='wrongpassword'
+            password='mksai'
         ))
         self.assertEqual(response.status_code, 401)
 
@@ -30,6 +30,7 @@ class LoginTestCase(unittest.TestCase):
             password='123456'
         ))
         self.assertEqual(response.status_code, 401)
+
 
 
 if __name__ == '__main__':
