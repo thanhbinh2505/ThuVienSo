@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Thư Viện Số{% endblock %} | LibraVerse</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4f46e5',
+                        primaryHover: '#4338ca',
+                        secondary: '#f59e0b',
+                        lightBg: '#eef2ff',
+                    },
+                    boxShadow: {
+                        btn: '0 8px 20px -6px rgba(79, 70, 229, 0.45)',
+                        soft: '0 10px 30px -10px rgba(15, 23, 42, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; }
+        .fade-in { animation: fadeIn .4s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+{% block header %}
+<header class="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+        <a href="/" class="flex items-center gap-2 shrink-0">
+            <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-btn">
+                <i data-lucide="book-open" class="w-6 h-6 text-white"></i>
+            </div>
+            <span class="text-slate-900 text-xl font-extrabold tracking-tight">Thư Viện<span class="text-primary"> Số</span></span>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-8 font-medium text-slate-600">
+            <a href="/" class="hover:text-primary transition-colors">Trang chủ</a>
+            <a href="/#tim-kiem" class="hover:text-primary transition-colors">Tìm sách</a>
+            <a href="/#the-loai" class="hover:text-primary transition-colors">Thể loại</a>
+        </nav>
+
+        <div class="flex items-center gap-3">
+            {% if current_user.is_authenticated %}
+            <div class="hidden sm:flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <img src="{{ current_user.avatar or 'https://ui-avatars.com/api/?name=' + (current_user.hoTen | urlencode) + '&background=eef2ff&color=4f46e5' }}"
+                     class="w-9 h-9 rounded-full border border-gray-200 object-cover" alt="avatar">
+                {{ current_user.hoTen }}
+            </div>
+            <a href="/logout" class="px-4 py-2 rounded-xl border border-gray-200 text-slate-600 hover:border-primary hover:text-primary transition-colors text-sm font-semibold">
+                Đăng xuất
+            </a>
+            {% else %}
+            <a href="/login" class="px-4 py-2 rounded-xl text-slate-600 hover:text-primary transition-colors text-sm font-semibold">
+                Đăng nhập
+            </a>
+            <a href="/register" class="px-4 py-2.5 bg-primary hover:bg-primaryHover text-white rounded-xl text-sm font-semibold shadow-btn transition-all">
+                Đăng ký
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+{% endblock %}
+
+<main class="min-h-screen">
+    {% block content %}{% endblock %}
+</main>
+
+{% block footer %}
+<footer class="bg-slate-900 text-slate-300 pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div>
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="book-open" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-white text-lg font-extrabold">Thư Viện<span class="text-primary"> Số</span></span>
+            </div>
+            <p class="text-sm text-slate-400 leading-relaxed">Nền tảng thư viện số giúp bạn tìm kiếm, khám phá và đọc thông tin sách mọi lúc, mọi nơi.</p>
+        </div>
+        <div>
+            <h4 class="text-white font-bold mb-4">Khám phá</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+                <li><a href="/#tim-kiem" class="hover:text-primary transition-colors">Tìm kiếm sách</a></li>
+                <li><a href="/#the-loai" class="hover:text-primary transition-colors">Thể loại</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="text-white font-bold mb-4">Tài khoản</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+                <li><a href="/login" class="hover:text-primary transition-colors">Đăng nhập</a></li>
+                <li><a href="/register" class="hover:text-primary transition-colors">Đăng ký</a></li>
+            </ul>
+        </div>
+    </div>
+
+</footer>
+{% endblock %}
+
+<script>
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

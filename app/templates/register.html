@@ -1,0 +1,108 @@
+{% extends 'layout/base.html' %}
+{% block title %}Đăng ký{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-lightBg px-4 pt-28 pb-12">
+    <div class="w-full max-w-xl bg-white rounded-3xl shadow-soft border border-gray-100 p-10 fade-in">
+
+        <div class="text-center mb-8">
+            <div class="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-btn">
+                <i data-lucide="user-plus" class="w-7 h-7 text-white"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900">Tạo tài khoản</h1>
+            <p class="text-slate-500 text-sm mt-1">Đăng ký để tìm kiếm và khám phá kho sách .</p>
+        </div>
+
+        {% if err_msg %}
+        <div class="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 fade-in">
+            <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 shrink-0"></i>
+            <p class="text-sm font-medium text-red-600">{{ err_msg }}</p>
+        </div>
+        {% endif %}
+
+
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <a href="/login/google" class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl font-semibold text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4c-7.6 0-14.1 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.4C29.5 35.4 26.9 36 24 36c-5.2 0-9.6-3.1-11.3-7.5l-6.6 5.1C9.8 39.6 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.5l6.6 5.4C41.4 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+                Google
+            </a>
+            <a href="/login/facebook" class="flex items-center justify-center gap-2 py-3 border border-gray-200 rounded-xl font-semibold text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2"><path d="M22 12c0-5.5-4.5-10-10-10S2 6.5 2 12c0 5 3.7 9.1 8.4 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7C18.3 21.1 22 17 22 12z"/></svg>
+                Facebook
+            </a>
+        </div>
+
+        <div class="relative mb-6">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+            <div class="relative flex justify-center text-xs"><span class="bg-white px-3 text-slate-400 font-medium">HOẶC ĐĂNG KÝ BẰNG THÔNG TIN</span></div>
+        </div>
+
+        <form method="POST" class="space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Họ và tên</label>
+                    <input type="text" name="hoten" required
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                           placeholder="Nguyễn Văn A">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tên đăng nhập</label>
+                    <input type="text" name="username" required
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                           placeholder="vd: nguyenvana01">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" name="email"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                           placeholder="ban@email.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
+                    <input type="tel" name="sdt"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                           placeholder="0912345678">
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 -mt-2">Vui lòng cung cấp ít nhất Email hoặc Số điện thoại.</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Giới tính</label>
+                    <select name="gioitinh" required
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="male">Nam</option>
+                        <option value="female">Nữ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ngày sinh</label>
+                    <input type="date" name="ngaysinh"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
+                <input type="password" name="password" required
+                       class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                       placeholder="Tối thiểu 8 ký tự, có hoa/thường/số/ký tự đặc biệt">
+            </div>
+
+            <button type="submit"
+                    class="w-full py-3.5 bg-primary hover:bg-primaryHover text-white rounded-xl font-semibold shadow-btn transition-all transform hover:-translate-y-0.5">
+                Đăng ký
+            </button>
+        </form>
+
+        <p class="mt-6 text-center text-sm text-gray-500">
+            Đã có tài khoản?
+            <a href="/login" class="font-bold text-primary hover:text-primaryHover transition-colors">Đăng nhập ngay</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
