@@ -29,11 +29,7 @@
         </div>
 
         <div class="lg:col-span-8">
-            {% if sach.the_loai %}
-            <span class="inline-block px-3 py-1 rounded-full bg-lightBg text-primary text-xs font-bold mb-3">
-                {{ sach.the_loai.tenTheLoai }}
-            </span>
-            {% endif %}
+
 
             <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2">{{ sach.tenSach }}</h1>
             <p class="text-lg text-slate-500 mb-4">Tác giả: <span class="font-semibold text-slate-700">{{ sach.tacGia }}</span></p>
@@ -74,7 +70,7 @@
 
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <h2 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-                    <i data-lucide="align-left" class="w-5 h-5 text-primary"></i> Giới thiệu sách
+                    Giới thiệu sách
                 </h2>
                 <p class="text-slate-600 leading-relaxed whitespace-pre-line">
                     {{ sach.moTa or 'Sách hiện chưa có mô tả chi tiết.' }}
