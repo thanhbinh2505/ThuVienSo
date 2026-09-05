@@ -45,10 +45,28 @@
         </a>
 
         <nav class="hidden md:flex items-center gap-8 font-medium text-slate-600">
-            <a href="/" class="hover:text-primary transition-colors">Trang chủ</a>
-            <a href="/#tim-kiem" class="hover:text-primary transition-colors">Tìm sách</a>
-            <a href="/#the-loai" class="hover:text-primary transition-colors">Thể loại</a>
-        </nav>
+            {% if current_user.is_authenticated and current_user.role.name == 'DOCGIA' %}
+<a href="/sach-dang-muon" class="hover:text-primary transition-colors">
+    📖 Sách đang mượn
+</a>
+{% endif %}
+
+    <a href="/" class="hover:text-primary transition-colors">Trang chủ</a>
+
+    <a href="/#tim-kiem" class="hover:text-primary transition-colors">
+        Tìm sách
+    </a>
+
+    <a href="/#the-loai" class="hover:text-primary transition-colors">
+        Thể loại
+    </a>
+
+    {% if current_user.is_authenticated and current_user.role.name == 'THUTHU' %}
+    <a href="/thuthu" class="hover:text-primary transition-colors">
+        📚 Quản lý thư viện
+    </a>
+    {% endif %}
+</nav>
 
         <div class="flex items-center gap-3">
             {% if current_user.is_authenticated %}

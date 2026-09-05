@@ -1,0 +1,574 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Quản lý thủ thư{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-slate-900">
+            Quản lý thư viện
+        </h1>
+
+        <p class="text-slate-500 mt-2">
+            Xin chào {{ current_user.hoTen }}
+        </p>
+    </div>
+
+
+    <!-- THỐNG KÊ -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p class="text-sm text-slate-500">Chờ duyệt mượn</p>
+            <p id="count-borrow" class="text-3xl font-bold text-primary mt-2">
+                {{ so_yeu_cau_muon or 0 }}
+            </p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p class="text-sm text-slate-500">Chờ duyệt gia hạn</p>
+            <p id="count-renew" class="text-3xl font-bold text-amber-500 mt-2">
+                {{ so_yeu_cau_gia_han or 0 }}
+            </p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p class="text-sm text-slate-500">Đang mượn</p>
+            <p class="text-3xl font-bold text-green-600 mt-2">
+                {{ so_sach_dang_muon or 0 }}
+            </p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p class="text-sm text-slate-500">Sách trong kho</p>
+            <p class="text-3xl font-bold text-slate-800 mt-2">
+                {{ tong_so_sach or 0 }}
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- YÊU CẦU MƯỢN -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm mb-8">
+
+        <div class="p-6 border-b border-gray-100">
+
+            <h2 class="text-xl font-bold text-slate-800">
+                📚 Yêu cầu mượn sách
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Danh sách yêu cầu đang chờ thủ thư xử lý
+            </p>
+
+        </div>
+
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <thead class="bg-slate-50">
+
+                    <tr>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Độc giả
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Sách
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Ngày đăng ký
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Trạng thái
+                        </th>
+
+                        <th class="text-right px-6 py-4 font-semibold text-slate-600">
+                            Xử lý
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="borrow-list">
+
+                    {% if danh_sach_cho_duyet %}
+
+                        {% for phieu in danh_sach_cho_duyet %}
+
+                        <tr
+                            id="borrow-row-{{ phieu.id }}"
+                            class="border-t border-gray-100"
+                        >
+
+                            <td class="px-6 py-4">
+
+                                <p class="font-semibold text-slate-800">
+                                    {{ phieu.user.hoTen }}
+                                </p>
+
+                                <p class="text-xs text-slate-400">
+                                    {{ phieu.user.username or phieu.user.email }}
+                                </p>
+
+                            </td>
+
+
+                            <td class="px-6 py-4">
+
+                                <p class="font-semibold text-slate-800">
+                                    {{ phieu.sach.tenSach }}
+                                </p>
+
+                                <p class="text-xs text-slate-400">
+                                    {{ phieu.sach.tacGia }}
+                                </p>
+
+                            </td>
+
+
+                            <td class="px-6 py-4 text-slate-500">
+
+                                {{ phieu.ngayDangKy.strftime('%d/%m/%Y %H:%M') }}
+
+                            </td>
+
+
+                            <td class="px-6 py-4">
+
+                                <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-600 text-xs font-semibold">
+                                    Chờ duyệt
+                                </span>
+
+                            </td>
+
+
+                            <td class="px-6 py-4">
+
+                                <div class="flex justify-end gap-2">
+
+                                    <button
+                                        type="button"
+                                        onclick="duyetMuon({{ phieu.id }})"
+                                        class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                                    >
+                                        Duyệt
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onclick="tuChoiMuon({{ phieu.id }})"
+                                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                                    >
+                                        Từ chối
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="text-center py-10 text-slate-400"
+                        >
+                            Hiện không có yêu cầu mượn nào.
+
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- YÊU CẦU GIA HẠN -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm mb-8">
+
+        <div class="p-6 border-b border-gray-100">
+
+            <h2 class="text-xl font-bold text-slate-800">
+                ⏰ Yêu cầu gia hạn
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Các yêu cầu gia hạn sách đang chờ xử lý
+            </p>
+
+        </div>
+
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <thead class="bg-slate-50">
+
+                    <tr>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Độc giả
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Sách
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Hạn trả hiện tại
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Trạng thái
+                        </th>
+
+                        <th class="text-right px-6 py-4 font-semibold text-slate-600">
+                            Xử lý
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="renew-list">
+
+                    {% if danh_sach_cho_gia_han %}
+
+                        {% for phieu in danh_sach_cho_gia_han %}
+
+                        <tr
+                            id="renew-row-{{ phieu.id }}"
+                            class="border-t border-gray-100"
+                        >
+
+                            <td class="px-6 py-4 font-semibold text-slate-800">
+                                {{ phieu.user.hoTen }}
+                            </td>
+
+                            <td class="px-6 py-4">
+                                {{ phieu.sach.tenSach }}
+                            </td>
+
+                            <td class="px-6 py-4 text-slate-500">
+
+                                {% if phieu.hanTra %}
+                                    {{ phieu.hanTra.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    Chưa có
+                                {% endif %}
+
+                            </td>
+
+                            <td class="px-6 py-4">
+
+                                <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-600 text-xs font-semibold">
+                                    Chờ gia hạn
+                                </span>
+
+                            </td>
+
+                            <td class="px-6 py-4">
+
+                                <div class="flex justify-end gap-2">
+
+                                    <button
+                                        type="button"
+                                        onclick="duyetGiaHan({{ phieu.id }})"
+                                        class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+                                    >
+                                        Duyệt
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onclick="tuChoiGiaHan({{ phieu.id }})"
+                                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                                    >
+                                        Từ chối
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="text-center py-10 text-slate-400"
+                        >
+                            Hiện không có yêu cầu gia hạn nào.
+
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- SÁCH ĐANG MƯỢN -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
+
+        <div class="p-6 border-b border-gray-100">
+
+            <h2 class="text-xl font-bold text-slate-800">
+                📖 Danh sách sách đang được mượn
+            </h2>
+
+        </div>
+
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <thead class="bg-slate-50">
+
+                    <tr>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Độc giả
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Sách
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Ngày mượn
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Hạn trả
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% if danh_sach_dang_muon %}
+
+                        {% for phieu in danh_sach_dang_muon %}
+
+                        <tr class="border-t border-gray-100">
+
+                            <td class="px-6 py-4 font-semibold text-slate-800">
+                                {{ phieu.user.hoTen }}
+                            </td>
+
+                            <td class="px-6 py-4">
+                                {{ phieu.sach.tenSach }}
+                            </td>
+
+                            <td class="px-6 py-4 text-slate-500">
+
+                                {% if phieu.ngayMuon %}
+                                    {{ phieu.ngayMuon.strftime('%d/%m/%Y') }}
+                                {% endif %}
+
+                            </td>
+
+                            <td class="px-6 py-4">
+
+                                {% if phieu.hanTra %}
+
+                                    <span
+                                        class="
+                                        {% if phieu.hanTra < now %}
+                                            text-red-500 font-bold
+                                        {% else %}
+                                            text-slate-600
+                                        {% endif %}
+                                        "
+                                    >
+                                        {{ phieu.hanTra.strftime('%d/%m/%Y') }}
+                                    </span>
+
+                                {% else %}
+
+                                    Chưa có
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="4"
+                            class="text-center py-10 text-slate-400"
+                        >
+                            Chưa có sách đang được mượn.
+
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- JAVASCRIPT -->
+
+<script>
+
+async function xuLyPhieu(url, rowId) {
+
+    try {
+
+        const response = await fetch(
+            url,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.success) {
+
+            alert(data.message);
+            return;
+
+        }
+
+        const row = document.getElementById(rowId);
+
+        if (row) {
+            row.remove();
+        }
+
+        alert(data.message);
+
+        location.reload();
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert('Có lỗi xảy ra!');
+
+    }
+
+}
+
+
+function duyetMuon(id) {
+
+    if (!confirm('Bạn có chắc muốn duyệt yêu cầu mượn này?')) {
+        return;
+    }
+
+    xuLyPhieu(
+        `/api/thuthu/phieu-muon/${id}/duyet`,
+        `borrow-row-${id}`
+    );
+
+}
+
+
+function tuChoiMuon(id) {
+
+    if (!confirm('Bạn có chắc muốn từ chối yêu cầu này?')) {
+        return;
+    }
+
+    xuLyPhieu(
+        `/api/thuthu/phieu-muon/${id}/tu-choi`,
+        `borrow-row-${id}`
+    );
+
+}
+
+
+function duyetGiaHan(id) {
+
+    if (!confirm('Bạn có chắc muốn duyệt gia hạn?')) {
+        return;
+    }
+
+    xuLyPhieu(
+        `/api/thuthu/phieu-muon/${id}/duyet-gia-han`,
+        `renew-row-${id}`
+    );
+
+}
+
+
+function tuChoiGiaHan(id) {
+
+    if (!confirm('Bạn có chắc muốn từ chối gia hạn?')) {
+        return;
+    }
+
+    xuLyPhieu(
+        `/api/thuthu/phieu-muon/${id}/tu-choi-gia-han`,
+        `renew-row-${id}`
+    );
+
+}
+
+</script>
+
+{% endblock %}

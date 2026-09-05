@@ -37,6 +37,7 @@ class User(UserMixin, BaseModel):
     soDienThoai = Column(String(15), unique=True, nullable=True)
 
     gioiTinh = Column(Boolean, nullable=True)
+    ngaySinh = Column(Date, nullable=True)
     password = Column(String(255), nullable=True)
 
     role = Column(Enum(UserRole), nullable=False, default=UserRole.DOCGIA)
@@ -95,6 +96,7 @@ class Sach(BaseModel):
     soLuongConLai = Column(Integer, nullable=False, default=0)
 
     diemDanhGiaTB = Column(Float, nullable=False, default=0)
+    soLuotDanhGia = Column(Integer, nullable=False, default=0)
     ngayTao = Column(DateTime, default=datetime.now)
 
     def to_dict(self):
@@ -107,6 +109,7 @@ class Sach(BaseModel):
             "theloai_id": self.theloai_id,
             "soLuongConLai": self.soLuongConLai,
             "diemDanhGiaTB": round(self.diemDanhGiaTB or 0, 1),
+            "soLuotDanhGia": self.soLuotDanhGia or 0,
             "namXuatBan": self.namXuatBan,
         }
 
@@ -129,6 +132,59 @@ class Sach(BaseModel):
             "trangThai": "Còn sách" if self.soLuongConLai > 0 else "Hết sách",
         }
 
+class DanhGia(BaseModel):
+    __tablename__ = 'danhgia'
+
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    sach_id = Column(Integer, ForeignKey('sach.id'), nullable=False)
+
+    soSao = Column(Integer, nullable=False)
+    ngayTao = Column(DateTime, default=datetime.now)
+
+    user = relationship('User', backref='danh_sach_danh_gia')
+    sach = relationship('Sach', backref='danh_sach_danh_gia')
+
+class BinhLuan(BaseModel):
+    __tablename__ = 'binhluan'
+
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    sach_id = Column(Integer, ForeignKey('sach.id'), nullable=False)
+
+    noiDung = Column(Text, nullable=False)
+    ngayTao = Column(DateTime, default=datetime.now)
+
+    user = relationship('User', backref='danh_sach_binh_luan')
+    sach = relationship('Sach', backref='danh_sach_binh_luan')
+
+class TrangThaiMuon(str, RoleEnum):
+    CHO_DUYET = "CHO_DUYET"
+    DA_DUYET = "DA_DUYET"
+    DA_NHAN = "DA_NHAN"
+    TU_CHOI = "TU_CHOI"
+    DA_TRA = "DA_TRA"
+    DA_HUY = "DA_HUY"
+    CHO_GIA_HAN = "CHO_GIA_HAN"
+
+
+class PhieuMuon(BaseModel):
+    __tablename__ = 'phieumuon'
+
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    sach_id = Column(Integer, ForeignKey('sach.id'), nullable=False)
+
+    ngayDangKy = Column(DateTime, default=datetime.now)
+    ngayDuyet = Column(DateTime, nullable=True)
+    ngayMuon = Column(DateTime, nullable=True)
+    hanTra = Column(DateTime, nullable=True)
+
+    trangThai = Column(
+        Enum(TrangThaiMuon),
+        nullable=False,
+        default=TrangThaiMuon.CHO_DUYET
+    )
+
+    user = relationship('User', backref='danh_sach_phieu_muon')
+    sach = relationship('Sach', backref='danh_sach_phieu_muon')
 
 if __name__ == '__main__':
     with app.app_context():

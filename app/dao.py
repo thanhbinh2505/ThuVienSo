@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta
+
 from sqlalchemy import or_
 
 from app import db
-from app.models import OAuthProvider, Sach, TheLoai, User, UserRole
+from app.models import OAuthProvider, Sach, TheLoai, User, UserRole, DanhGia, BinhLuan, TrangThaiMuon, PhieuMuon
 
 
 def commit():
@@ -93,6 +95,7 @@ def dang_ky_doc_gia(username, hoten, password, email=None, sdt=None,
             email=email,
             soDienThoai=sdt,
             gioiTinh=gioitinh,
+            ngaySinh=ngaysinh,
             role=UserRole.DOCGIA,
         )
         user.set_password(password)
@@ -165,3 +168,418 @@ def dang_nhap_hoac_tao_tai_khoan_oauth(provider: OAuthProvider, oauth_id, email=
     except Exception as e:
         db.session.rollback()
         raise e
+
+def danh_gia_sach(user_id, sach_id, so_sao):
+    try:
+        if so_sao < 1 or so_sao > 5:
+            return False, "Số sao phải từ 1 đến 5!"
+
+        sach = get_sach_by_id(sach_id)
+
+        if not sach:
+            return False, "Không tìm thấy sách!"
+
+        danh_gia_cu = DanhGia.query.filter_by(
+            user_id=user_id,
+            sach_id=sach_id
+        ).first()
+
+        if danh_gia_cu:
+            # Người này đã đánh giá trước đó
+            # Chỉ thay đổi số sao
+            danh_gia_cu.soSao = so_sao
+            danh_gia_cu.ngayTao = datetime.now()
+
+        else:
+            # Người này đánh giá lần đầu
+            danh_gia_moi = DanhGia(
+                user_id=user_id,
+                sach_id=sach_id,
+                soSao=so_sao
+            )
+
+            db.session.add(danh_gia_moi)
+
+        db.session.flush()
+
+        # Lấy toàn bộ đánh giá của cuốn sách
+        danh_sach = DanhGia.query.filter_by(
+            sach_id=sach_id
+        ).all()
+
+        # Tính lại số lượt đánh giá
+        sach.soLuotDanhGia = len(danh_sach)
+
+        # Tính lại điểm trung bình
+        if sach.soLuotDanhGia > 0:
+            tong_diem = sum(d.soSao for d in danh_sach)
+            sach.diemDanhGiaTB = tong_diem / sach.soLuotDanhGia
+        else:
+            sach.diemDanhGiaTB = 0
+
+        db.session.commit()
+
+        return True, "Đánh giá sách thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI ĐÁNH GIÁ:", e)
+        return False, "Có lỗi xảy ra khi đánh giá!"
+
+def them_binh_luan(user_id, sach_id, noi_dung):
+    try:
+        if not noi_dung or not noi_dung.strip():
+            return False, "Nội dung bình luận không được để trống!", None
+
+        sach = get_sach_by_id(sach_id)
+
+        if not sach:
+            return False, "Không tìm thấy sách!", None
+
+        binh_luan = BinhLuan(
+            user_id=user_id,
+            sach_id=sach_id,
+            noiDung=noi_dung.strip()
+        )
+
+        db.session.add(binh_luan)
+        db.session.commit()
+
+        return True, "Bình luận thành công!", binh_luan
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI BÌNH LUẬN:", e)
+        return False, "Có lỗi xảy ra khi bình luận!", None
+
+
+def get_binh_luan_sach(sach_id):
+    return BinhLuan.query.filter_by(
+        sach_id=sach_id
+    ).order_by(
+        BinhLuan.ngayTao.desc()
+    ).all()
+
+
+def xoa_binh_luan(user_id, binh_luan_id):
+    try:
+        binh_luan = BinhLuan.query.get(binh_luan_id)
+
+        if not binh_luan:
+            return False, "Không tìm thấy bình luận!"
+
+        if binh_luan.user_id != user_id:
+            return False, "Bạn không có quyền xóa bình luận này!"
+
+        db.session.delete(binh_luan)
+        db.session.commit()
+
+        return True, "Đã xóa bình luận!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI XÓA BÌNH LUẬN:", e)
+        return False, "Có lỗi xảy ra khi xóa bình luận!"
+
+def dang_ky_muon_sach(user_id, sach_id):
+    try:
+        sach = get_sach_by_id(sach_id)
+
+        if not sach:
+            return False, "Không tìm thấy sách!"
+
+        if sach.soLuongConLai <= 0:
+            return False, "Sách hiện đã hết!"
+        so_sach_dang_muon = PhieuMuon.query.filter(
+            PhieuMuon.user_id == user_id,
+            PhieuMuon.trangThai.in_([
+                TrangThaiMuon.DA_DUYET,
+                TrangThaiMuon.CHO_DUYET
+            ])
+        ).count()
+
+        if so_sach_dang_muon >= 5:
+            return False, "Bạn đã đạt giới hạn tối đa 5 cuốn sách được mượn!"
+
+
+        # Kiểm tra người dùng có yêu cầu đang chờ duyệt không
+        phieu_dang_cho = PhieuMuon.query.filter(
+            PhieuMuon.user_id == user_id,
+            PhieuMuon.sach_id == sach_id,
+            PhieuMuon.trangThai == TrangThaiMuon.CHO_DUYET
+        ).first()
+
+        if phieu_dang_cho:
+            return False, "Bạn đã đăng ký mượn sách này và đang chờ duyệt!"
+
+        # Kiểm tra đang mượn sách này
+        phieu_dang_muon = PhieuMuon.query.filter(
+            PhieuMuon.user_id == user_id,
+            PhieuMuon.sach_id == sach_id,
+            PhieuMuon.trangThai == TrangThaiMuon.DA_DUYET
+        ).first()
+
+        if phieu_dang_muon:
+            return False, "Bạn đang mượn sách này!"
+
+        phieu = PhieuMuon(
+            user_id=user_id,
+            sach_id=sach_id,
+            trangThai=TrangThaiMuon.CHO_DUYET
+        )
+
+        db.session.add(phieu)
+        db.session.commit()
+
+        return True, "Đăng ký mượn sách thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI ĐĂNG KÝ MƯỢN:", e)
+        return False, "Có lỗi xảy ra khi đăng ký mượn!"
+
+def gui_yeu_cau_gia_han(user_id, phieu_muon_id):
+    try:
+        phieu = PhieuMuon.query.get(phieu_muon_id)
+
+        if not phieu:
+            return False, "Không tìm thấy phiếu mượn!"
+
+        if phieu.user_id != user_id:
+            return False, "Bạn không có quyền gia hạn phiếu mượn này!"
+
+        if phieu.trangThai != TrangThaiMuon.DA_DUYET:
+            return False, "Chỉ sách đang được mượn mới có thể yêu cầu gia hạn!"
+
+        if not phieu.hanTra:
+            return False, "Phiếu mượn chưa có hạn trả!"
+
+        phieu.trangThai = TrangThaiMuon.CHO_GIA_HAN
+
+        db.session.commit()
+
+        return True, "Đã gửi yêu cầu gia hạn!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI GIA HẠN:", repr(e))
+        return False, "Có lỗi xảy ra khi gửi yêu cầu gia hạn!"
+
+def get_phieu_muon_cho_duyet():
+    return PhieuMuon.query.filter_by(
+        trangThai=TrangThaiMuon.CHO_DUYET
+    ).order_by(
+        PhieuMuon.ngayDangKy.desc()
+    ).all()
+
+
+def get_phieu_muon_cho_gia_han():
+    return PhieuMuon.query.filter_by(
+        trangThai=TrangThaiMuon.CHO_GIA_HAN
+    ).order_by(
+        PhieuMuon.ngayDangKy.desc()
+    ).all()
+
+
+def get_phieu_muon_dang_muon():
+    return PhieuMuon.query.filter_by(
+        trangThai=TrangThaiMuon.DA_DUYET
+    ).order_by(
+        PhieuMuon.ngayMuon.desc()
+    ).all()
+
+def duyet_phieu_muon(phieu_id):
+    try:
+        phieu = PhieuMuon.query.get(phieu_id)
+
+        if not phieu:
+            return False, "Không tìm thấy yêu cầu mượn!"
+
+        if phieu.trangThai != TrangThaiMuon.CHO_DUYET:
+            return False, "Yêu cầu này không còn ở trạng thái chờ duyệt!"
+
+        sach = get_sach_by_id(phieu.sach_id)
+
+        if not sach:
+            return False, "Không tìm thấy sách!"
+
+        if sach.soLuongConLai <= 0:
+            return False, "Sách đã hết!"
+
+        # KIỂM TRA GIỚI HẠN 5 CUỐN
+        so_sach_dang_muon = PhieuMuon.query.filter(
+            PhieuMuon.user_id == phieu.user_id,
+            PhieuMuon.trangThai == TrangThaiMuon.DA_DUYET
+        ).count()
+
+        if so_sach_dang_muon >= 5:
+            return False, "Độc giả đã đạt giới hạn tối đa 5 cuốn đang mượn!"
+
+        # Duyệt phiếu
+        phieu.trangThai = TrangThaiMuon.DA_DUYET
+        phieu.ngayDuyet = datetime.now()
+        phieu.ngayMuon = datetime.now()
+
+        # Hạn trả 7 ngày
+        from datetime import timedelta
+        phieu.hanTra = datetime.now() + timedelta(days=7)
+
+        # Giảm số lượng sách
+        sach.soLuongConLai -= 1
+
+        db.session.commit()
+
+        return True, "Đã duyệt yêu cầu mượn!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI DUYỆT MƯỢN:", repr(e))
+        return False, "Có lỗi xảy ra khi duyệt yêu cầu!"
+
+
+def tu_choi_phieu_muon(phieu_id):
+    try:
+        phieu = PhieuMuon.query.get(phieu_id)
+
+        if not phieu:
+            return False, "Không tìm thấy yêu cầu mượn!"
+
+        if phieu.trangThai != TrangThaiMuon.CHO_DUYET:
+            return False, "Yêu cầu này không còn ở trạng thái chờ duyệt!"
+
+        phieu.trangThai = TrangThaiMuon.TU_CHOI
+        phieu.ngayDuyet = datetime.now()
+
+        db.session.commit()
+
+        return True, "Đã từ chối yêu cầu mượn!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI TỪ CHỐI MƯỢN:", repr(e))
+        return False, "Có lỗi xảy ra khi từ chối yêu cầu!"
+
+
+def duyet_gia_han(phieu_id):
+    try:
+        phieu = PhieuMuon.query.get(phieu_id)
+
+        if not phieu:
+            return False, "Không tìm thấy yêu cầu gia hạn!"
+
+        if phieu.trangThai != TrangThaiMuon.CHO_GIA_HAN:
+            return False, "Yêu cầu này không ở trạng thái chờ gia hạn!"
+
+        if not phieu.hanTra:
+            return False, "Phiếu mượn chưa có hạn trả!"
+
+        from datetime import timedelta
+
+        # Gia hạn thêm 7 ngày
+        phieu.hanTra = phieu.hanTra + timedelta(days=7)
+
+        # Quay về trạng thái đang mượn
+        phieu.trangThai = TrangThaiMuon.DA_DUYET
+
+        db.session.commit()
+
+        return True, "Đã duyệt gia hạn thêm 7 ngày!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI DUYỆT GIA HẠN:", repr(e))
+        return False, "Có lỗi xảy ra khi duyệt gia hạn!"
+
+
+def tu_choi_gia_han(phieu_id):
+    try:
+        phieu = PhieuMuon.query.get(phieu_id)
+
+        if not phieu:
+            return False, "Không tìm thấy yêu cầu gia hạn!"
+
+        if phieu.trangThai != TrangThaiMuon.CHO_GIA_HAN:
+            return False, "Yêu cầu này không ở trạng thái chờ gia hạn!"
+
+        # Trả về trạng thái đang mượn
+        phieu.trangThai = TrangThaiMuon.DA_DUYET
+
+        db.session.commit()
+
+        return True, "Đã từ chối yêu cầu gia hạn!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI TỪ CHỐI GIA HẠN:", repr(e))
+        return False, "Có lỗi xảy ra khi từ chối gia hạn!"
+
+def get_phieu_muon_dang_muon_cua_doc_gia(user_id):
+    return PhieuMuon.query.filter(
+        PhieuMuon.user_id == user_id,
+        PhieuMuon.trangThai.in_([
+            TrangThaiMuon.DA_DUYET,
+            TrangThaiMuon.CHO_GIA_HAN
+        ])
+    ).order_by(
+        PhieuMuon.hanTra.asc()
+    ).all()
+
+def tra_sach(user_id, phieu_muon_id):
+    try:
+        phieu = PhieuMuon.query.get(phieu_muon_id)
+
+        if not phieu:
+            return False, "Không tìm thấy phiếu mượn!"
+
+        if phieu.user_id != user_id:
+            return False, "Bạn không có quyền trả phiếu mượn này!"
+
+        if phieu.trangThai != TrangThaiMuon.DA_DUYET:
+            return False, "Sách này không ở trạng thái đang mượn!"
+
+        sach = get_sach_by_id(phieu.sach_id)
+
+        if not sach:
+            return False, "Không tìm thấy sách!"
+
+        phieu.trangThai = TrangThaiMuon.DA_TRA
+
+        sach.soLuongConLai += 1
+
+        db.session.commit()
+
+        return True, "Trả sách thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI TRẢ SÁCH:", repr(e))
+        return False, "Có lỗi xảy ra khi trả sách!"
+
+def huy_phieu_qua_han(phieu_id):
+    try:
+        phieu = PhieuMuon.query.get(phieu_id)
+
+        if not phieu:
+            return False, "Không tìm thấy yêu cầu mượn!"
+
+        if phieu.trangThai != TrangThaiMuon.DA_DUYET:
+            return False, "Yêu cầu này không ở trạng thái chờ nhận sách!"
+
+        if not phieu.ngayDuyet:
+            return False, "Phiếu chưa có ngày duyệt!"
+
+        han_nhan = phieu.ngayDuyet + timedelta(days=2)
+
+        if datetime.now() <= han_nhan:
+            return False, "Yêu cầu này chưa quá hạn nhận sách!"
+
+        phieu.trangThai = TrangThaiMuon.DA_HUY
+
+        db.session.commit()
+
+        return True, "Đã hủy yêu cầu mượn quá hạn nhận sách!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI HỦY PHIẾU QUÁ HẠN:", repr(e))
+        return False, "Có lỗi xảy ra khi hủy yêu cầu!"
