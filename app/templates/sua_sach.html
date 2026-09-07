@@ -1,0 +1,515 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Sửa sách{% endblock %}
+
+{% block content %}
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-900">
+                ✏️ Chỉnh sửa sách
+            </h1>
+
+            <p class="text-slate-500 mt-2">
+                Cập nhật thông tin sách trong thư viện
+            </p>
+        </div>
+
+        <a
+            href="{{ url_for('quan_ly_sach') }}"
+            class="inline-flex items-center gap-2 px-4 py-2.5
+                   border border-gray-200
+                   text-slate-600
+                   rounded-xl
+                   hover:border-primary
+                   hover:text-primary
+                   transition"
+        >
+            ← Quay lại
+        </a>
+
+    </div>
+
+
+    <!-- THÔNG BÁO LỖI -->
+    {% if error %}
+
+    <div class="mb-6 px-4 py-3 rounded-xl
+                bg-red-50 border border-red-200
+                text-red-600 font-medium">
+
+        {{ error }}
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- FORM -->
+    <div class="bg-white rounded-2xl border border-gray-100
+                shadow-soft overflow-hidden">
+
+        <!-- HEADER -->
+        <div class="px-6 py-5 border-b border-gray-100">
+
+            <h2 class="text-xl font-bold text-slate-800">
+                Thông tin sách
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Chỉnh sửa các thông tin bên dưới rồi nhấn lưu.
+            </p>
+
+        </div>
+
+
+        <form method="POST" class="p-6" enctype="multipart/form-data">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+
+                <!-- TÊN SÁCH -->
+                <div>
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Tên sách
+                        <span class="text-red-500">*</span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="ten_sach"
+                        required
+                        value="{{ sach.tenSach }}"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                </div>
+
+
+                <!-- TÁC GIẢ -->
+                <div>
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Tác giả
+                        <span class="text-red-500">*</span>
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="tac_gia"
+                        required
+                        value="{{ sach.tacGia }}"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                </div>
+
+
+                <!-- NHÀ XUẤT BẢN -->
+                <div>
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Nhà xuất bản
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="nha_xuat_ban"
+                        value="{{ sach.nhaXuatBan or '' }}"
+                        placeholder="Ví dụ: NXB Trẻ"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               placeholder-slate-400
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                </div>
+
+
+                <!-- NĂM XUẤT BẢN -->
+                <div>
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Năm xuất bản
+
+                    </label>
+
+                    <input
+                        type="number"
+                        name="nam_xuat_ban"
+                        min="1000"
+                        max="2100"
+                        value="{{ sach.namXuatBan or '' }}"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                </div>
+
+
+                <!-- NGÔN NGỮ -->
+                <div>
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Ngôn ngữ
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="ngon_ngu"
+                        value="{{ sach.ngonNgu or 'Tiếng Việt' }}"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                </div>
+
+
+                <!-- SỐ TRANG -->
+                <div>
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Số trang
+
+                    </label>
+
+                    <input
+                        type="number"
+                        name="so_trang"
+                        min="1"
+                        value="{{ sach.soTrang or '' }}"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                </div>
+
+
+                <!-- THỂ LOẠI -->
+                <div>
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Thể loại
+
+                    </label>
+
+                    <select
+                        name="theloai_id"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               bg-white
+                               text-slate-800
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                        <option value="">
+                            -- Chọn thể loại --
+                        </option>
+
+                        {% for theloai in danh_sach_theloai %}
+
+                        <option
+                            value="{{ theloai.id }}"
+                            {% if sach.theloai_id == theloai.id %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ theloai.tenTheLoai }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- SỐ LƯỢNG -->
+                <div>
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Tổng số lượng
+                        <span class="text-red-500">*</span>
+
+                    </label>
+
+                    <input
+                        type="number"
+                        name="so_luong"
+                        min="0"
+                        required
+                        value="{{ sach.soLuong }}"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                    <p class="text-xs text-slate-400 mt-2">
+                        Số lượng còn lại hiện tại:
+                        <span class="font-semibold text-slate-500">
+                            {{ sach.soLuongConLai }}
+                        </span>
+                    </p>
+
+                </div>
+
+                <!-- CHỌN ẢNH MỚI TỪ MÁY -->
+<div>
+
+    <label class="block text-sm font-semibold text-slate-700 mb-2">
+        Chọn ảnh bìa mới từ máy
+    </label>
+
+    <input
+        type="file"
+        name="anh_bia_file"
+        accept="image/*"
+        class="w-full px-4 py-3 border border-gray-200 rounded-xl"
+    >
+
+    <p class="text-xs text-slate-400 mt-2">
+        Nếu không chọn ảnh mới thì giữ ảnh hiện tại.
+    </p>
+
+</div>
+
+
+<!-- DÁN LINK ẢNH -->
+<div>
+
+    <label class="block text-sm font-semibold text-slate-700 mb-2">
+        Hoặc dán link ảnh mới
+    </label>
+
+    <input
+        type="text"
+        name="anh_bia_url"
+        placeholder="https://example.com/anh-sach.jpg"
+        class="w-full px-4 py-3
+               border border-gray-200
+               rounded-xl"
+    >
+
+    <p class="text-xs text-slate-400 mt-2">
+        Dán link sẽ thay thế ảnh hiện tại.
+    </p>
+
+</div>
+
+
+                <!-- ẢNH BÌA -->
+                <div class="md:col-span-2">
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Đường dẫn ảnh bìa
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="anh_bia"
+                        value="{{ sach.anhBia or '' }}"
+                        placeholder="/static/image/sach1.jpg"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               placeholder-slate-400
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >
+
+                    <p class="text-xs text-slate-400 mt-2">
+                        Để trống nếu muốn giữ ảnh hiện tại.
+                    </p>
+
+                </div>
+
+
+                <!-- XEM ẢNH HIỆN TẠI -->
+                <div class="md:col-span-2">
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Ảnh bìa hiện tại
+
+                    </label>
+
+                    <div class="flex items-start gap-4 p-4
+                                rounded-xl bg-slate-50
+                                border border-gray-100">
+
+                        <img
+                            src="{{ sach.anhBia or '/static/image/default.png' }}"
+                            alt="{{ sach.tenSach }}"
+                            class="w-24 h-32 object-cover rounded-xl
+                                   border border-gray-200 shadow-sm"
+                            onerror="this.src='/static/image/default.png'"
+                        >
+
+                        <div class="text-sm text-slate-500">
+
+                            <p class="font-semibold text-slate-700 mb-1">
+                                {{ sach.tenSach }}
+                            </p>
+
+                            <p>
+                                Nếu không nhập đường dẫn ảnh mới,
+                                ảnh hiện tại sẽ được giữ nguyên.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MÔ TẢ -->
+                <div class="md:col-span-2">
+
+                    <label class="block text-sm font-semibold
+                                  text-slate-700 mb-2">
+
+                        Mô tả sách
+
+                    </label>
+
+                    <textarea
+                        name="mo_ta"
+                        rows="6"
+                        class="w-full px-4 py-3
+                               border border-gray-200
+                               rounded-xl
+                               text-slate-800
+                               placeholder-slate-400
+                               resize-none
+                               focus:outline-none
+                               focus:ring-2 focus:ring-primary/20
+                               focus:border-primary
+                               transition"
+                    >{{ sach.moTa or '' }}</textarea>
+
+                </div>
+
+            </div>
+
+
+            <!-- NÚT -->
+            <div class="flex flex-col-reverse sm:flex-row
+                        justify-end gap-3
+                        mt-8 pt-6
+                        border-t border-gray-100">
+
+                <a
+                    href="{{ url_for('quan_ly_sach') }}"
+                    class="inline-flex items-center justify-center
+                           px-5 py-3
+                           rounded-xl
+                           border border-gray-200
+                           text-slate-600
+                           font-semibold
+                           hover:bg-slate-50
+                           transition"
+                >
+                    Hủy
+                </a>
+
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center gap-2
+                           px-6 py-3
+                           bg-primary hover:bg-primaryHover
+                           text-white font-semibold
+                           rounded-xl
+                           shadow-btn
+                           transition-all"
+                >
+                    💾 Lưu thay đổi
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

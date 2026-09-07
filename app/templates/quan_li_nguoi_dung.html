@@ -1,0 +1,407 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Quản lý người dùng{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="flex flex-col sm:flex-row justify-between
+                items-start sm:items-center gap-4 mb-8">
+
+        <div>
+
+            <h1 class="text-3xl font-extrabold text-slate-900">
+                👥 Quản lý người dùng
+            </h1>
+
+            <p class="text-slate-500 mt-2">
+                Quản lý tài khoản độc giả và thủ thư
+            </p>
+
+        </div>
+
+        <a
+            href="{{ url_for('quan_ly_sach') }}"
+            class="inline-flex items-center gap-2
+                   px-4 py-2.5
+                   border border-gray-200
+                   rounded-xl
+                   text-slate-600
+                   hover:border-primary
+                   hover:text-primary
+                   transition"
+        >
+            ← Quản lý sách
+        </a>
+
+    </div>
+
+
+    <!-- THỐNG KÊ -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+
+        <div class="bg-white rounded-2xl
+                    border border-gray-100
+                    shadow-soft p-6">
+
+            <p class="text-sm text-slate-500">
+                Tổng người dùng
+            </p>
+
+            <p class="text-3xl font-extrabold
+                      text-slate-900 mt-2">
+
+                {{ danh_sach_user|length }}
+
+            </p>
+
+        </div>
+
+
+        <div class="bg-white rounded-2xl
+                    border border-gray-100
+                    shadow-soft p-6">
+
+            <p class="text-sm text-slate-500">
+                Đang hoạt động
+            </p>
+
+            <p class="text-3xl font-extrabold
+                      text-green-600 mt-2">
+
+                {{ danh_sach_user
+                   |selectattr('active')
+                   |list
+                   |length }}
+
+            </p>
+
+        </div>
+
+
+        <div class="bg-white rounded-2xl
+                    border border-gray-100
+                    shadow-soft p-6">
+
+            <p class="text-sm text-slate-500">
+                Đang bị khóa
+            </p>
+
+            <p class="text-3xl font-extrabold
+                      text-red-500 mt-2">
+
+                {{ danh_sach_user
+                   |rejectattr('active')
+                   |list
+                   |length }}
+
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- BẢNG -->
+    <div class="bg-white rounded-2xl
+                border border-gray-100
+                shadow-soft overflow-hidden">
+
+        <div class="px-6 py-5 border-b border-gray-100">
+
+            <h2 class="text-xl font-bold text-slate-800">
+                Danh sách người dùng
+            </h2>
+
+        </div>
+
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <thead class="bg-slate-50">
+
+                    <tr>
+
+                        <th class="px-6 py-4 text-left
+                                   font-semibold text-slate-600">
+                            ID
+                        </th>
+
+                        <th class="px-6 py-4 text-left
+                                   font-semibold text-slate-600">
+                            Người dùng
+                        </th>
+
+                        <th class="px-6 py-4 text-left
+                                   font-semibold text-slate-600">
+                            Liên hệ
+                        </th>
+
+                        <th class="px-6 py-4 text-left
+                                   font-semibold text-slate-600">
+                            Vai trò
+                        </th>
+
+                        <th class="px-6 py-4 text-center
+                                   font-semibold text-slate-600">
+                            Trạng thái
+                        </th>
+
+                        <th class="px-6 py-4 text-center
+                                   font-semibold text-slate-600">
+                            Thao tác
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% if danh_sach_user %}
+
+                    {% for user in danh_sach_user %}
+
+                    <tr class="border-t border-gray-100
+                               hover:bg-slate-50 transition">
+
+                        <!-- ID -->
+                        <td class="px-6 py-4 text-slate-500">
+                            #{{ user.id }}
+                        </td>
+
+
+                        <!-- NGƯỜI DÙNG -->
+                        <td class="px-6 py-4">
+
+                            <div class="flex items-center gap-3">
+
+                                <img
+                                    src="{{ user.avatar or 'https://ui-avatars.com/api/?name=' + (user.hoTen | urlencode) + '&background=eef2ff&color=4f46e5' }}"
+                                    class="w-11 h-11 rounded-full
+                                           border border-gray-200
+                                           object-cover"
+                                    alt="avatar"
+                                >
+
+                                <div>
+
+                                    <p class="font-bold text-slate-800">
+                                        {{ user.hoTen }}
+                                    </p>
+
+                                    <p class="text-xs text-slate-400">
+                                        {{ user.username or 'Chưa có username' }}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- LIÊN HỆ -->
+                        <td class="px-6 py-4">
+
+                            <p class="text-slate-700">
+                                {{ user.email or 'Chưa có email' }}
+                            </p>
+
+                            <p class="text-xs text-slate-400 mt-1">
+                                {{ user.soDienThoai or 'Chưa có SĐT' }}
+                            </p>
+
+                        </td>
+
+
+                        <!-- VAI TRÒ -->
+                        <td class="px-6 py-4">
+
+                            {% if user.role.name == 'ADMIN' %}
+
+                                <span class="px-3 py-1 rounded-full
+                                             bg-purple-100
+                                             text-purple-700
+                                             text-xs font-semibold">
+                                    ADMIN
+                                </span>
+
+                            {% elif user.role.name == 'THUTHU' %}
+
+                                <span class="px-3 py-1 rounded-full
+                                             bg-blue-100
+                                             text-blue-700
+                                             text-xs font-semibold">
+                                    THỦ THƯ
+                                </span>
+
+                            {% else %}
+
+                                <span class="px-3 py-1 rounded-full
+                                             bg-green-100
+                                             text-green-700
+                                             text-xs font-semibold">
+                                    ĐỘC GIẢ
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- TRẠNG THÁI -->
+                        <td class="px-6 py-4 text-center">
+
+                            {% if user.active %}
+
+                                <span class="px-3 py-1 rounded-full
+                                             bg-green-100
+                                             text-green-700
+                                             text-xs font-semibold">
+                                    Đang hoạt động
+                                </span>
+
+                            {% else %}
+
+                                <span class="px-3 py-1 rounded-full
+                                             bg-red-100
+                                             text-red-600
+                                             text-xs font-semibold">
+                                    Đã khóa
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- THAO TÁC -->
+                        <td class="px-6 py-4">
+
+                            <div class="flex items-center
+                                        justify-center gap-2">
+
+                                {% if user.role.name != 'ADMIN' %}
+
+                                    {% if user.active %}
+
+                                    <!-- KHÓA -->
+                                    <form
+                                        action="{{ url_for('khoa_nguoi_dung', user_id=user.id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm(
+                                            'Bạn có chắc muốn khóa tài khoản này?'
+                                        );"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="w-10 h-10 rounded-xl
+                                                   border border-amber-200
+                                                   text-amber-600
+                                                   hover:bg-amber-50
+                                                   transition"
+                                            title="Khóa tài khoản"
+                                        >
+                                            🔒
+                                        </button>
+
+                                    </form>
+
+                                    {% else %}
+
+                                    <!-- MỞ KHÓA -->
+                                    <form
+                                        action="{{ url_for('mo_khoa_nguoi_dung', user_id=user.id) }}"
+                                        method="POST"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="w-10 h-10 rounded-xl
+                                                   border border-green-200
+                                                   text-green-600
+                                                   hover:bg-green-50
+                                                   transition"
+                                            title="Mở khóa"
+                                        >
+                                            🔓
+                                        </button>
+
+                                    </form>
+
+                                    {% endif %}
+
+
+                                    <!-- XÓA -->
+                                    <form
+                                        action="{{ url_for('xoa_nguoi_dung', user_id=user.id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm(
+                                            'Bạn có chắc muốn xóa tài khoản này?'
+                                        );"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="w-10 h-10 rounded-xl
+                                                   border border-red-200
+                                                   text-red-600
+                                                   hover:bg-red-50
+                                                   transition"
+                                            title="Xóa tài khoản"
+                                        >
+                                            🗑️
+                                        </button>
+
+                                    </form>
+
+                                {% else %}
+
+                                    <span class="text-xs text-slate-400">
+                                        Tài khoản quản trị
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="6"
+                            class="px-6 py-16 text-center
+                                   text-slate-400"
+                        >
+                            Chưa có người dùng.
+                        </td>
+
+                    </tr>
+
+                {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

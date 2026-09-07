@@ -186,6 +186,36 @@ class PhieuMuon(BaseModel):
     user = relationship('User', backref='danh_sach_phieu_muon')
     sach = relationship('Sach', backref='danh_sach_phieu_muon')
 
+class LichSuXem(BaseModel):
+    __tablename__ = 'lichsuxem'
+
+    user_id = Column(
+        Integer,
+        ForeignKey('user.id'),
+        nullable=False
+    )
+
+    sach_id = Column(
+        Integer,
+        ForeignKey('sach.id'),
+        nullable=False
+    )
+
+    ngayXem = Column(
+        DateTime,
+        default=datetime.now
+    )
+
+    user = relationship(
+        'User',
+        backref='danh_sach_lich_su_xem'
+    )
+
+    sach = relationship(
+        'Sach',
+        backref='danh_sach_nguoi_da_xem'
+    )
+
 if __name__ == '__main__':
     with app.app_context():
         db.drop_all()

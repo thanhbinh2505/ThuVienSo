@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from sqlalchemy import or_
 
 from app import db
-from app.models import OAuthProvider, Sach, TheLoai, User, UserRole, DanhGia, BinhLuan, TrangThaiMuon, PhieuMuon
+from app.models import (OAuthProvider, Sach, TheLoai, User, UserRole,
+                        DanhGia, BinhLuan, TrangThaiMuon, PhieuMuon, LichSuXem)
 
 
 def commit():
@@ -583,3 +584,499 @@ def huy_phieu_qua_han(phieu_id):
         db.session.rollback()
         print("LỖI HỦY PHIẾU QUÁ HẠN:", repr(e))
         return False, "Có lỗi xảy ra khi hủy yêu cầu!"
+
+# ==============================
+# QUẢN LÝ SÁCH - ADMIN
+# ==============================
+
+def get_all_sach():
+    return Sach.query.order_by(Sach.id.desc()).all()
+
+
+def them_sach(
+        ten_sach,
+        tac_gia,
+        nha_xuat_ban=None,
+        nam_xuat_ban=None,
+        ngon_ngu="Tiếng Việt",
+        so_trang=None,
+        mo_ta=None,
+        anh_bia=None,
+        theloai_id=None,
+        so_luong=0):
+
+    try:
+        sach = Sach(
+            tenSach=ten_sach,
+            tacGia=tac_gia,
+            nhaXuatBan=nha_xuat_ban,
+            namXuatBan=nam_xuat_ban,
+            ngonNgu=ngon_ngu,
+            soTrang=so_trang,
+            moTa=mo_ta,
+            anhBia=anh_bia,
+            theloai_id=theloai_id,
+            soLuong=so_luong,
+            soLuongConLai=so_luong
+        )
+
+        db.session.add(sach)
+        db.session.commit()
+
+        return True, "Thêm sách thành công!", sach
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI THÊM SÁCH:", repr(e))
+
+        return False, "Có lỗi xảy ra khi thêm sách!", None
+
+
+def cap_nhat_sach(
+        sach_id,
+        ten_sach,
+        tac_gia,
+        nha_xuat_ban=None,
+        nam_xuat_ban=None,
+        ngon_ngu=None,
+        so_trang=None,
+        mo_ta=None,
+        anh_bia=None,
+        theloai_id=None,
+        so_luong=None):
+
+    try:
+        sach = get_sach_by_id(sach_id)
+
+        if not sach:
+            return False, "Không tìm thấy sách!"
+
+        sach.tenSach = ten_sach
+        sach.tacGia = tac_gia
+        sach.nhaXuatBan = nha_xuat_ban
+        sach.namXuatBan = nam_xuat_ban
+        sach.ngonNgu = ngon_ngu
+        sach.soTrang = so_trang
+        sach.moTa = mo_ta
+        sach.theloai_id = theloai_id
+        sach.anhBia = anh_bia
+
+        if anh_bia:
+            sach.anhBia = anh_bia
+
+        if so_luong is not None:
+            # Không cho tổng số lượng nhỏ hơn số sách đang được mượn
+            so_dang_muon = sach.soLuong - sach.soLuongConLai
+
+            if so_luong < so_dang_muon:
+                return False, (
+                    f"Không thể giảm số lượng xuống {so_luong} "
+                    f"vì hiện có {so_dang_muon} cuốn đang được mượn!"
+                )
+
+            sach.soLuong = so_luong
+            sach.soLuongConLai = so_luong - so_dang_muon
+
+        db.session.commit()
+
+        return True, "Cập nhật sách thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI CẬP NHẬT SÁCH:", repr(e))
+
+        return False, "Có lỗi xảy ra khi cập nhật sách!"
+
+
+def xoa_sach(sach_id):
+
+    try:
+        sach = get_sach_by_id(sach_id)
+
+        if not sach:
+            return False, "Không tìm thấy sách!"
+
+        # Không cho xóa nếu đang có người mượn
+        so_dang_muon = PhieuMuon.query.filter(
+            PhieuMuon.sach_id == sach_id,
+            PhieuMuon.trangThai.in_([
+                TrangThaiMuon.DA_DUYET,
+                TrangThaiMuon.CHO_GIA_HAN
+            ])
+        ).count()
+
+        if so_dang_muon > 0:
+            return False, (
+                "Không thể xóa sách vì hiện đang có "
+                "độc giả mượn sách này!"
+            )
+
+        db.session.delete(sach)
+        db.session.commit()
+
+        return True, "Xóa sách thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI XÓA SÁCH:", repr(e))
+
+        return False, "Có lỗi xảy ra khi xóa sách!"
+
+
+
+def get_all_users():
+    return User.query.order_by(User.id.desc()).all()
+
+
+def tim_kiem_user(tu_khoa=""):
+
+    query = User.query
+
+    if tu_khoa:
+        tu_khoa = tu_khoa.strip()
+
+        query = query.filter(
+            or_(
+                User.username.ilike(f"%{tu_khoa}%"),
+                User.hoTen.ilike(f"%{tu_khoa}%"),
+                User.email.ilike(f"%{tu_khoa}%"),
+                User.soDienThoai.ilike(f"%{tu_khoa}%")
+            )
+        )
+
+    return query.order_by(User.id.desc()).all()
+
+
+def get_user_by_id(user_id):
+    return User.query.get(user_id)
+
+
+def khoa_user(user_id):
+
+    try:
+        user = User.query.get(user_id)
+
+        if not user:
+            return False, "Không tìm thấy người dùng!"
+
+        # Không cho Admin tự khóa chính mình
+        if user.role == UserRole.ADMIN:
+            return False, "Không thể khóa tài khoản Admin!"
+
+        user.active = False
+
+        db.session.commit()
+
+        return True, "Đã khóa tài khoản!"
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("LỖI KHÓA USER:", repr(e))
+
+        return False, "Có lỗi xảy ra khi khóa tài khoản!"
+
+
+def mo_khoa_user(user_id):
+
+    try:
+        user = User.query.get(user_id)
+
+        if not user:
+            return False, "Không tìm thấy người dùng!"
+
+        user.active = True
+
+        db.session.commit()
+
+        return True, "Đã mở khóa tài khoản!"
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("LỖI MỞ KHÓA USER:", repr(e))
+
+        return False, "Có lỗi xảy ra khi mở khóa tài khoản!"
+
+
+def xoa_user(user_id):
+
+    try:
+        user = User.query.get(user_id)
+
+        if not user:
+            return False, "Không tìm thấy người dùng!"
+
+        # Không cho xóa Admin
+        if user.role == UserRole.ADMIN:
+            return False, "Không thể xóa tài khoản Admin!"
+
+        # Kiểm tra còn phiếu mượn đang hoạt động
+        so_phieu_dang_hoat_dong = PhieuMuon.query.filter(
+            PhieuMuon.user_id == user_id,
+            PhieuMuon.trangThai.in_([
+                TrangThaiMuon.CHO_DUYET,
+                TrangThaiMuon.DA_DUYET,
+                TrangThaiMuon.CHO_GIA_HAN
+            ])
+        ).count()
+
+        if so_phieu_dang_hoat_dong > 0:
+
+            return False, (
+                "Không thể xóa người dùng vì "
+                "đang có phiếu mượn đang hoạt động!"
+            )
+
+        db.session.delete(user)
+
+        db.session.commit()
+
+        return True, "Đã xóa người dùng!"
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        print("LỖI XÓA USER:", repr(e))
+
+        return False, "Có lỗi xảy ra khi xóa người dùng!"
+
+def import_sach_tu_excel(danh_sach_sach):
+    """
+    danh_sach_sach là list các dictionary:
+    {
+        "ten_sach": "...",
+        "tac_gia": "...",
+        "nha_xuat_ban": "...",
+        "nam_xuat_ban": 2025,
+        "ngon_ngu": "Tiếng Việt",
+        "so_trang": 200,
+        "theloai_id": 1,
+        "so_luong": 10,
+        "anh_bia": "...",
+        "mo_ta": "..."
+    }
+    """
+    try:
+        so_luong_them = 0
+
+        for item in danh_sach_sach:
+            sach = Sach(
+                tenSach=item.get("ten_sach"),
+                tacGia=item.get("tac_gia"),
+                nhaXuatBan=item.get("nha_xuat_ban"),
+                namXuatBan=item.get("nam_xuat_ban"),
+                ngonNgu=item.get("ngon_ngu") or "Tiếng Việt",
+                soTrang=item.get("so_trang"),
+                theloai_id=item.get("theloai_id"),
+                soLuong=item.get("so_luong") or 0,
+                soLuongConLai=item.get("so_luong") or 0,
+                anhBia=item.get("anh_bia"),
+                moTa=item.get("mo_ta")
+            )
+
+            db.session.add(sach)
+            so_luong_them += 1
+
+        db.session.commit()
+
+        return True, f"Đã import {so_luong_them} sách thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI IMPORT EXCEL:", repr(e))
+        return False, "Import Excel thất bại!"
+
+def get_all_theloai():
+    return TheLoai.query.order_by(TheLoai.id.desc()).all()
+
+
+def them_theloai(ten_the_loai, mo_ta=None):
+    try:
+        ten_the_loai = ten_the_loai.strip()
+
+        if not ten_the_loai:
+            return False, "Tên thể loại không được để trống!"
+
+        ton_tai = TheLoai.query.filter(
+            TheLoai.tenTheLoai.ilike(ten_the_loai)
+        ).first()
+
+        if ton_tai:
+            return False, "Thể loại này đã tồn tại!"
+
+        the_loai = TheLoai(
+            tenTheLoai=ten_the_loai,
+            moTa=mo_ta.strip() if mo_ta else None
+        )
+
+        db.session.add(the_loai)
+        db.session.commit()
+
+        return True, "Thêm thể loại thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI THÊM THỂ LOẠI:", repr(e))
+        return False, "Có lỗi xảy ra khi thêm thể loại!"
+
+
+def cap_nhat_theloai(theloai_id, ten_the_loai, mo_ta=None):
+    try:
+        the_loai = TheLoai.query.get(theloai_id)
+
+        if not the_loai:
+            return False, "Không tìm thấy thể loại!"
+
+        ten_the_loai = ten_the_loai.strip()
+
+        if not ten_the_loai:
+            return False, "Tên thể loại không được để trống!"
+
+        ton_tai = TheLoai.query.filter(
+            TheLoai.tenTheLoai.ilike(ten_the_loai),
+            TheLoai.id != theloai_id
+        ).first()
+
+        if ton_tai:
+            return False, "Tên thể loại này đã tồn tại!"
+
+        the_loai.tenTheLoai = ten_the_loai
+        the_loai.moTa = mo_ta.strip() if mo_ta else None
+
+        db.session.commit()
+
+        return True, "Cập nhật thể loại thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI CẬP NHẬT THỂ LOẠI:", repr(e))
+        return False, "Có lỗi xảy ra khi cập nhật thể loại!"
+
+
+def xoa_theloai(theloai_id):
+    try:
+        the_loai = TheLoai.query.get(theloai_id)
+
+        if not the_loai:
+            return False, "Không tìm thấy thể loại!"
+
+        # Các sách thuộc thể loại này sẽ không còn thể loại
+        Sach.query.filter(
+            Sach.theloai_id == theloai_id
+        ).update(
+            {"theloai_id": None},
+            synchronize_session=False
+        )
+
+        db.session.delete(the_loai)
+        db.session.commit()
+
+        return True, "Xóa thể loại thành công!"
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI XÓA THỂ LOẠI:", repr(e))
+        return False, "Có lỗi xảy ra khi xóa thể loại!"
+
+
+def tim_user_theo_dinh_danh(dinh_danh):
+    return User.query.filter(
+        (User.username == dinh_danh) |
+        (User.email == dinh_danh) |
+        (User.soDienThoai == dinh_danh)
+    ).first()
+
+def dat_lai_mat_khau(user_id, password):
+
+    user = User.query.get(user_id)
+
+    if not user:
+        return False, "Không tìm thấy tài khoản!"
+
+    try:
+        user.set_password(password)
+
+        db.session.commit()
+
+        return True, "Đặt lại mật khẩu thành công!"
+
+    except Exception:
+        db.session.rollback()
+
+        return False, "Có lỗi xảy ra khi đặt lại mật khẩu!"
+
+def luu_lich_su_xem(user_id, sach_id):
+    try:
+        lich_su = LichSuXem(
+            user_id=user_id,
+            sach_id=sach_id
+        )
+
+        db.session.add(lich_su)
+        db.session.commit()
+
+        return True
+
+    except Exception as e:
+        db.session.rollback()
+        print("LỖI LƯU LỊCH SỬ XEM:", repr(e))
+
+        return False
+
+def get_sach_goi_y(user_id, limit=8):
+
+    # Sách đã xem
+    sach_da_xem = {
+        item.sach_id
+        for item in LichSuXem.query.filter_by(
+            user_id=user_id
+        ).all()
+    }
+
+    # Sách đã mượn
+    sach_da_muon = {
+        item.sach_id
+        for item in PhieuMuon.query.filter_by(
+            user_id=user_id
+        ).all()
+    }
+
+    sach_da_biet = sach_da_xem.union(
+        sach_da_muon
+    )
+
+    # Lấy thể loại yêu thích
+    theloai_ids = set()
+
+    for sach_id in sach_da_biet:
+
+        sach = Sach.query.get(sach_id)
+
+        if sach and sach.theloai_id:
+            theloai_ids.add(
+                sach.theloai_id
+            )
+
+    # Chưa có lịch sử → sách phổ biến
+    if not theloai_ids:
+
+        return Sach.query.filter(
+            Sach.soLuongConLai > 0
+        ).order_by(
+            Sach.diemDanhGiaTB.desc(),
+            Sach.soLuotDanhGia.desc()
+        ).limit(limit).all()
+
+    # Gợi ý sách chưa từng xem/mượn
+    return Sach.query.filter(
+        Sach.theloai_id.in_(theloai_ids),
+        Sach.id.notin_(sach_da_biet),
+        Sach.soLuongConLai > 0
+    ).order_by(
+        Sach.diemDanhGiaTB.desc(),
+        Sach.soLuotDanhGia.desc()
+    ).limit(limit).all()

@@ -1,0 +1,479 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Quản lý sách{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-2">
+                📚 Quản lý kho sách
+            </h1>
+
+            <p class="text-slate-500">
+                Quản lý danh sách và số lượng sách trong thư viện
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+
+    <!-- Nút Import Excel -->
+    <a href="{{ url_for('import_sach_excel') }}"
+       class="inline-flex items-center gap-2 px-5 py-3
+              bg-green-600 hover:bg-green-700
+              text-white font-semibold rounded-xl
+              shadow-btn transition-all">
+
+        <span class="text-xl leading-none">📥</span>
+        Import Excel
+
+    </a>
+
+    <!-- Nút Thêm sách -->
+    <a href="{{ url_for('them_sach') }}"
+       class="inline-flex items-center gap-2 px-5 py-3
+              bg-primary hover:bg-primaryHover
+              text-white font-semibold rounded-xl
+              shadow-btn transition-all">
+
+        <span class="text-xl leading-none">+</span>
+        Thêm sách
+
+    </a>
+
+</div>
+
+    </div>
+
+
+    <!-- THỐNG KÊ -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+
+        <!-- TỔNG ĐẦU SÁCH -->
+        <div class="bg-white rounded-2xl border border-gray-100
+                    shadow-soft p-6">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <p class="text-sm text-slate-500 mb-2">
+                        Tổng đầu sách
+                    </p>
+
+                    <p class="text-3xl font-extrabold text-slate-900">
+                        {{ danh_sach_sach|length }}
+                    </p>
+                </div>
+
+                <div class="w-12 h-12 rounded-xl bg-indigo-50
+                            flex items-center justify-center text-2xl">
+                    📚
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TỔNG SỐ SÁCH -->
+        <div class="bg-white rounded-2xl border border-gray-100
+                    shadow-soft p-6">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <p class="text-sm text-slate-500 mb-2">
+                        Tổng số sách
+                    </p>
+
+                    <p class="text-3xl font-extrabold text-slate-900">
+                        {{ danh_sach_sach|sum(attribute='soLuong') }}
+                    </p>
+                </div>
+
+                <div class="w-12 h-12 rounded-xl bg-blue-50
+                            flex items-center justify-center text-2xl">
+                    📦
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SÁCH CÒN LẠI -->
+        <div class="bg-white rounded-2xl border border-gray-100
+                    shadow-soft p-6">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+                    <p class="text-sm text-slate-500 mb-2">
+                        Sách còn lại
+                    </p>
+
+                    <p class="text-3xl font-extrabold text-green-600">
+                        {{ danh_sach_sach|sum(attribute='soLuongConLai') }}
+                    </p>
+                </div>
+
+                <div class="w-12 h-12 rounded-xl bg-green-50
+                            flex items-center justify-center text-2xl">
+                    ✅
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- DANH SÁCH SÁCH -->
+    <div class="bg-white rounded-2xl border border-gray-100
+                shadow-soft overflow-hidden">
+
+        <!-- HEADER BẢNG -->
+        <div class="px-6 py-5 border-b border-gray-100">
+
+            <div class="flex flex-col sm:flex-row
+                        justify-between items-start sm:items-center gap-3">
+
+                <div>
+
+                    <h2 class="text-xl font-bold text-slate-900">
+                        Danh sách sách
+                    </h2>
+
+                    <p class="text-sm text-slate-500 mt-1">
+                        Quản lý thông tin và số lượng sách
+                    </p>
+
+                </div>
+
+                <div class="text-sm text-slate-500">
+                    {{ danh_sach_sach|length }} đầu sách
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- BẢNG -->
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <thead class="bg-slate-50">
+
+                    <tr>
+
+                        <th class="text-left px-6 py-4
+                                   font-semibold text-slate-600">
+                            ID
+                        </th>
+
+                        <th class="text-left px-6 py-4
+                                   font-semibold text-slate-600">
+                            Sách
+                        </th>
+
+                        <th class="text-left px-6 py-4
+                                   font-semibold text-slate-600">
+                            Tác giả
+                        </th>
+
+                        <th class="text-left px-6 py-4
+                                   font-semibold text-slate-600">
+                            Thể loại
+                        </th>
+
+                        <th class="text-center px-6 py-4
+                                   font-semibold text-slate-600">
+                            Tổng số
+                        </th>
+
+                        <th class="text-center px-6 py-4
+                                   font-semibold text-slate-600">
+                            Còn lại
+                        </th>
+
+                        <th class="text-center px-6 py-4
+                                   font-semibold text-slate-600">
+                            Thao tác
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% if danh_sach_sach %}
+
+                    {% for sach in danh_sach_sach %}
+
+                    <tr class="border-t border-gray-100
+                               hover:bg-slate-50 transition">
+
+                        <!-- ID -->
+                        <td class="px-6 py-4 text-slate-500 font-medium">
+                            #{{ sach.id }}
+                        </td>
+
+
+                        <!-- SÁCH -->
+                        <td class="px-6 py-4">
+
+                            <div class="flex items-center gap-4 min-w-[260px]">
+
+                                <img
+                                    src="{{ sach.anhBia or '/static/image/default.png' }}"
+                                    alt="{{ sach.tenSach }}"
+                                    class="w-14 h-18 object-cover
+                                           rounded-lg border border-gray-200
+                                           shadow-sm"
+                                    onerror="this.src='/static/image/default.png'"
+                                >
+
+                                <div>
+
+                                    <p class="font-bold text-slate-800
+                                              line-clamp-2">
+
+                                        {{ sach.tenSach }}
+
+                                    </p>
+
+                                    {% if sach.namXuatBan %}
+
+                                    <p class="text-xs text-slate-400 mt-1">
+
+                                        Năm xuất bản:
+                                        {{ sach.namXuatBan }}
+
+                                    </p>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- TÁC GIẢ -->
+                        <td class="px-6 py-4 text-slate-600">
+
+                            {{ sach.tacGia }}
+
+                        </td>
+
+
+                        <!-- THỂ LOẠI -->
+                        <td class="px-6 py-4">
+
+                            {% if sach.the_loai %}
+
+                            <span class="inline-flex items-center
+                                         px-3 py-1 rounded-full
+                                         bg-indigo-50 text-indigo-600
+                                         text-xs font-semibold">
+
+                                {{ sach.the_loai.tenTheLoai }}
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="text-slate-400 text-sm">
+                                Chưa phân loại
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- TỔNG SỐ -->
+                        <td class="px-6 py-4 text-center">
+
+                            <span class="font-bold text-slate-800">
+                                {{ sach.soLuong }}
+                            </span>
+
+                        </td>
+
+
+                        <!-- CÒN LẠI -->
+                        <td class="px-6 py-4 text-center">
+
+                            {% if sach.soLuongConLai > 0 %}
+
+                            <span class="inline-flex items-center
+                                         justify-center
+                                         min-w-[36px]
+                                         px-2.5 py-1 rounded-full
+                                         bg-green-100 text-green-700
+                                         text-xs font-bold">
+
+                                {{ sach.soLuongConLai }}
+
+                            </span>
+
+                            {% else %}
+
+                            <span class="inline-flex items-center
+                                         px-3 py-1 rounded-full
+                                         bg-red-100 text-red-600
+                                         text-xs font-semibold">
+
+                                Hết sách
+
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- THAO TÁC -->
+                        <td class="px-6 py-4">
+
+                            <div class="flex items-center
+                                        justify-center gap-2">
+
+                                <!-- XEM -->
+                                <a
+                                    href="{{ url_for('chi_tiet_sach', sach_id=sach.id) }}"
+                                    title="Xem chi tiết"
+                                    class="inline-flex items-center
+                                           justify-center
+                                           w-10 h-10 rounded-xl
+                                           border border-blue-200
+                                           text-blue-600
+                                           hover:bg-blue-50
+                                           transition">
+
+                                    👁️
+
+                                </a>
+
+
+                                <!-- SỬA -->
+                                <a
+                                    href="{{ url_for('sua_sach', sach_id=sach.id) }}"
+                                    title="Sửa sách"
+                                    class="inline-flex items-center
+                                           justify-center
+                                           w-10 h-10 rounded-xl
+                                           border border-amber-200
+                                           text-amber-600
+                                           hover:bg-amber-50
+                                           transition">
+
+                                    ✏️
+
+                                </a>
+
+
+                                <!-- XÓA -->
+                                <form
+                                    action="{{ url_for('xoa_sach', sach_id=sach.id) }}"
+                                    method="POST"
+                                    onsubmit="return confirm(
+                                        'Bạn có chắc chắn muốn xóa sách này?'
+                                    );"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        title="Xóa sách"
+                                        class="inline-flex items-center
+                                               justify-center
+                                               w-10 h-10 rounded-xl
+                                               border border-red-200
+                                               text-red-600
+                                               hover:bg-red-50
+                                               transition">
+
+                                        🗑️
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <!-- KHÔNG CÓ SÁCH -->
+                    <tr>
+
+                        <td colspan="7" class="px-6 py-16 text-center">
+
+                            <div class="flex flex-col items-center">
+
+                                <div class="w-20 h-20 rounded-full
+                                            bg-slate-100
+                                            flex items-center justify-center
+                                            text-4xl mb-4">
+
+                                    📚
+
+                                </div>
+
+                                <h3 class="text-lg font-bold text-slate-800">
+                                    Chưa có sách nào
+                                </h3>
+
+                                <p class="text-sm text-slate-500 mt-2 mb-5">
+                                    Hãy thêm sách đầu tiên vào thư viện.
+                                </p>
+
+                                <a
+                                    href="{{ url_for('them_sach') }}"
+                                    class="inline-flex items-center gap-2
+                                           px-5 py-3
+                                           bg-primary
+                                           hover:bg-primaryHover
+                                           text-white font-semibold
+                                           rounded-xl shadow-btn
+                                           transition">
+
+                                    + Thêm sách
+
+                                </a>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

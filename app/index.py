@@ -6,18 +6,41 @@ from marshmallow import ValidationError
 import app.schemas as schemas
 from app import app, dao, login, oauth
 from app.decorator import anonymous_required, role_required
-from app.models import OAuthProvider, UserRole, Sach
+from app.models import OAuthProvider, UserRole,  TheLoai, Sach, User
 from datetime import datetime
+import os
+from openpyxl import load_workbook
+from werkzeug.utils import secure_filename
+import random
+from flask import session
+
+from flask_mail import Message
+from app import mail
 
 
 def register_routes(app):
-
-
     @app.route('/')
     def index():
         ds_theloai = dao.get_list_theloai()
-        ket_qua = dao.tim_kiem_sach(page=1, page_size=12)
-        return render_template('index.html', ds_theloai=ds_theloai, ket_qua=ket_qua)
+
+        ket_qua = dao.tim_kiem_sach(
+            page=1,
+            page_size=12
+        )
+
+        sach_goi_y = []
+
+        if current_user.is_authenticated:
+            sach_goi_y = dao.get_sach_goi_y(
+                current_user.id
+            )
+
+        return render_template(
+            'index.html',
+            ds_theloai=ds_theloai,
+            ket_qua=ket_qua,
+            sach_goi_y=sach_goi_y
+        )
 
     @app.route('/api/sach', methods=['GET'])
     def api_tim_kiem_sach():
@@ -43,9 +66,18 @@ def register_routes(app):
     @app.route('/sach/<int:sach_id>')
     def chi_tiet_sach(sach_id):
         sach = dao.get_sach_by_id(sach_id)
-        danh_sach_binh_luan = dao.get_binh_luan_sach(sach_id)
+
         if not sach:
             abort(404)
+
+        # Lưu lịch sử xem
+        if current_user.is_authenticated:
+            dao.luu_lich_su_xem(
+                current_user.id,
+                sach_id
+            )
+
+        danh_sach_binh_luan = dao.get_binh_luan_sach(sach_id)
 
         sach_lien_quan = dao.get_sach_lien_quan(sach)
 
@@ -121,17 +153,248 @@ def register_routes(app):
                     if next_page:
                         return redirect(next_page)
                     if user.role == UserRole.ADMIN:
-                        return redirect('/admin')
+                        return redirect(url_for('quan_ly_sach'))
                     elif user.role == UserRole.THUTHU:
                         return redirect('/thuthu')
                     return redirect('/')
 
         return render_template('login.html', error=error_msg, dinh_danh_val=dinh_danh_val)
 
+
     @app.route('/logout', methods=['GET', 'POST'])
     def logout_process():
         logout_user()
         return redirect('/')
+
+    @app.route('/quen-mat-khau', methods=['GET', 'POST'])
+    @anonymous_required
+    def quen_mat_khau():
+
+        if request.method == 'POST':
+
+            dinh_danh = request.form.get(
+                'dinh_danh', ''
+            ).strip()
+
+            phuong_thuc = request.form.get(
+                'phuong_thuc', ''
+            )
+
+            if not dinh_danh:
+                return render_template(
+                    'quen_mat_khau.html',
+                    error="Vui lòng nhập Email hoặc số điện thoại!"
+                )
+
+            # =========================
+            # TÌM USER BẰNG EMAIL
+            # =========================
+
+            if phuong_thuc == 'email':
+
+                user = User.query.filter_by(
+                    email=dinh_danh
+                ).first()
+
+                if not user:
+                    return render_template(
+                        'quen_mat_khau.html',
+                        error="Không tìm thấy Email này!"
+                    )
+
+            # =========================
+            # TÌM USER BẰNG SỐ ĐIỆN THOẠI
+            # =========================
+
+            elif phuong_thuc == 'sms':
+
+                user = User.query.filter_by(
+                    soDienThoai=dinh_danh
+                ).first()
+
+                if not user:
+                    return render_template(
+                        'quen_mat_khau.html',
+                        error="Không tìm thấy số điện thoại này!"
+                    )
+
+            else:
+
+                return render_template(
+                    'quen_mat_khau.html',
+                    error="Phương thức không hợp lệ!"
+                )
+
+            # =========================
+            # TẠO OTP 6 SỐ
+            # =========================
+
+            otp = str(random.randint(100000, 999999))
+
+            # Lưu OTP vào session
+            session['reset_otp'] = otp
+            session['reset_user_id'] = user.id
+            session['reset_method'] = phuong_thuc
+
+            # =========================
+            # GỬI EMAIL
+            # =========================
+
+            if phuong_thuc == 'email':
+
+                try:
+
+                    msg = Message(
+                        subject="Mã OTP đặt lại mật khẩu",
+                        sender=app.config['MAIL_USERNAME'],
+                        recipients=[user.email]
+                    )
+
+                    msg.body = f"""
+    Mã OTP đặt lại mật khẩu của bạn là:
+
+    {otp}
+
+    Mã có hiệu lực trong 5 phút.
+    """
+
+                    mail.send(msg)
+
+                except Exception as e:
+
+                    print("LỖI GỬI EMAIL:", e)
+
+                    return render_template(
+                        'quen_mat_khau.html',
+                        error="Không thể gửi Email!"
+                    )
+
+            # =========================
+            # SMS
+            # =========================
+
+            elif phuong_thuc == 'sms':
+
+                # TẠM THỜI CHƯA CÓ DỊCH VỤ SMS
+                # Sau đó sẽ tích hợp Twilio
+
+                print(
+                    f"OTP gửi đến {user.soDienThoai}: {otp}"
+                )
+
+            # Chuyển sang trang nhập OTP
+
+            return redirect(
+                url_for('xac_nhan_otp')
+            )
+
+        return render_template(
+            'quen_mat_khau.html'
+        )
+
+    @app.route('/xac-nhan-otp', methods=['GET', 'POST'])
+    @anonymous_required
+    def xac_nhan_otp():
+
+        # Nếu chưa có OTP thì quay lại trang quên mật khẩu
+        if 'reset_otp' not in session:
+            return redirect(
+                url_for('quen_mat_khau')
+            )
+
+        error = ""
+
+        if request.method == 'POST':
+
+            otp_nhap = request.form.get(
+                'otp', ''
+            ).strip()
+
+            otp_he_thong = session.get(
+                'reset_otp'
+            )
+
+            # Kiểm tra OTP
+            if otp_nhap != otp_he_thong:
+
+                error = "Mã OTP không đúng!"
+
+            else:
+
+                # Lưu user_id để bước đặt lại mật khẩu sử dụng
+                user_id = session.get(
+                    'reset_user_id'
+                )
+
+                # Xóa OTP sau khi xác nhận thành công
+                session.pop(
+                    'reset_otp',
+                    None
+                )
+
+                return redirect(
+                    url_for(
+                        'dat_lai_mat_khau',
+                        user_id=user_id
+                    )
+                )
+
+        return render_template(
+            'xac_nhan_otp.html',
+            error=error
+        )
+
+    @app.route('/dat-lai-mat-khau/<int:user_id>', methods=['GET', 'POST'])
+    @anonymous_required
+    def dat_lai_mat_khau(user_id):
+
+        user = dao.get_user_by_id(user_id)
+
+        if not user:
+            abort(404)
+
+        if request.method == 'POST':
+
+            password = request.form.get('password', '').strip()
+            confirm_password = request.form.get(
+                'confirm_password', ''
+            ).strip()
+
+            # Kiểm tra nhập đầy đủ
+            if not password or not confirm_password:
+                return render_template(
+                    'dat_lai_mat_khau.html',
+                    error="Vui lòng nhập đầy đủ mật khẩu!"
+                )
+
+            # Kiểm tra 2 mật khẩu giống nhau
+            if password != confirm_password:
+                return render_template(
+                    'dat_lai_mat_khau.html',
+                    error="Mật khẩu xác nhận không khớp!"
+                )
+
+            # Cập nhật mật khẩu
+            success, message = dao.dat_lai_mat_khau(
+                user_id,
+                password
+            )
+
+            if success:
+                return redirect(
+                    url_for(
+                        'login_process'
+                    )
+                )
+
+            return render_template(
+                'dat_lai_mat_khau.html',
+                error=message
+            )
+
+        return render_template(
+            'dat_lai_mat_khau.html'
+        )
 
 
     @app.route('/login/google')
@@ -492,6 +755,526 @@ def register_routes(app):
             "success": success,
             "message": message
         }), 200 if success else 400
+
+    @app.route('/admin/sach')
+    @role_required(UserRole.ADMIN)
+    def quan_ly_sach():
+
+        danh_sach_sach = dao.get_all_sach()
+
+        return render_template(
+            'quan_li_sach.html',
+            danh_sach_sach=danh_sach_sach
+        )
+
+    @app.route('/admin/sach/them', methods=['GET', 'POST'])
+    @role_required(UserRole.ADMIN)
+    def them_sach():
+
+        danh_sach_theloai = dao.get_list_theloai()
+
+        if request.method == 'POST':
+
+            ten_sach = request.form.get('ten_sach', '').strip()
+            tac_gia = request.form.get('tac_gia', '').strip()
+
+            nha_xuat_ban = request.form.get(
+                'nha_xuat_ban', ''
+            ).strip()
+
+            nam_xuat_ban = request.form.get('nam_xuat_ban')
+            ngon_ngu = request.form.get(
+                'ngon_ngu', 'Tiếng Việt'
+            )
+
+            so_trang = request.form.get('so_trang')
+
+            mo_ta = request.form.get('mo_ta', '').strip()
+
+            theloai_id = request.form.get('theloai_id')
+
+            so_luong = request.form.get('so_luong', 0)
+
+            file = request.files.get('anh_bia')
+
+            anh_bia_url = request.form.get('anh_bia_url', '').strip()
+
+            anh_bia = None
+
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+
+                file.save(
+                    os.path.join(
+                        app.config['UPLOAD_FOLDER'],
+                        filename
+                    )
+                )
+
+                anh_bia = f'/static/images/sach/{filename}'
+
+            elif anh_bia_url:
+                anh_bia = anh_bia_url
+
+            # Kiểm tra dữ liệu bắt buộc
+            if not ten_sach or not tac_gia:
+                return render_template(
+                    'them_sach.html',
+                    danh_sach_theloai=danh_sach_theloai,
+                    error="Vui lòng nhập tên sách và tác giả!"
+                )
+
+            try:
+                nam_xuat_ban = (
+                    int(nam_xuat_ban)
+                    if nam_xuat_ban else None
+                )
+
+                so_trang = (
+                    int(so_trang)
+                    if so_trang else None
+                )
+
+                theloai_id = (
+                    int(theloai_id)
+                    if theloai_id else None
+                )
+
+                so_luong = int(so_luong)
+
+                if so_luong < 0:
+                    raise ValueError
+
+            except ValueError:
+
+                return render_template(
+                    'them_sach.html',
+                    danh_sach_theloai=danh_sach_theloai,
+                    error="Dữ liệu số không hợp lệ!"
+                )
+
+            success, message, sach = dao.them_sach(
+                ten_sach=ten_sach,
+                tac_gia=tac_gia,
+                nha_xuat_ban=nha_xuat_ban,
+                nam_xuat_ban=nam_xuat_ban,
+                ngon_ngu=ngon_ngu,
+                so_trang=so_trang,
+                mo_ta=mo_ta,
+                theloai_id=theloai_id,
+                anh_bia=anh_bia,
+                so_luong=so_luong
+            )
+
+            if success:
+                return redirect(
+                    url_for('quan_ly_sach')
+                )
+
+            return render_template(
+                'them_sach.html',
+                danh_sach_theloai=danh_sach_theloai,
+                error=message
+            )
+
+        return render_template(
+            'them_sach.html',
+            danh_sach_theloai=danh_sach_theloai
+        )
+
+    @app.route(
+        '/admin/sach/<int:sach_id>/sua',
+        methods=['GET', 'POST']
+    )
+    @role_required(UserRole.ADMIN)
+    def sua_sach(sach_id):
+
+        sach = dao.get_sach_by_id(sach_id)
+
+        if not sach:
+            abort(404)
+
+        danh_sach_theloai = dao.get_list_theloai()
+
+        if request.method == 'POST':
+
+            ten_sach = request.form.get(
+                'ten_sach', ''
+            ).strip()
+
+            tac_gia = request.form.get(
+                'tac_gia', ''
+            ).strip()
+
+            nha_xuat_ban = request.form.get(
+                'nha_xuat_ban', ''
+            ).strip()
+
+            nam_xuat_ban = request.form.get(
+                'nam_xuat_ban'
+            )
+
+            ngon_ngu = request.form.get(
+                'ngon_ngu', 'Tiếng Việt'
+            )
+
+            so_trang = request.form.get(
+                'so_trang'
+            )
+
+            mo_ta = request.form.get(
+                'mo_ta', ''
+            ).strip()
+
+            theloai_id = request.form.get(
+                'theloai_id'
+            )
+
+            so_luong = request.form.get(
+                'so_luong'
+            )
+            file = request.files.get('anh_bia_file')
+
+            anh_bia_url = request.form.get(
+                'anh_bia_url',
+                ''
+            ).strip()
+
+            anh_bia = sach.anhBia
+
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+
+                file.save(
+                    os.path.join(
+                        app.config['UPLOAD_FOLDER'],
+                        filename
+                    )
+                )
+
+                anh_bia = f'/static/images/sach/{filename}'
+
+            elif anh_bia_url:
+                anh_bia = anh_bia_url
+
+            if not ten_sach or not tac_gia:
+                return render_template(
+                    'sua_sach.html',
+                    sach=sach,
+                    danh_sach_theloai=danh_sach_theloai,
+                    error="Vui lòng nhập tên sách và tác giả!"
+                )
+
+            try:
+
+                nam_xuat_ban = (
+                    int(nam_xuat_ban)
+                    if nam_xuat_ban else None
+                )
+
+                so_trang = (
+                    int(so_trang)
+                    if so_trang else None
+                )
+
+                theloai_id = (
+                    int(theloai_id)
+                    if theloai_id else None
+                )
+
+                so_luong = int(so_luong)
+
+                if so_luong < 0:
+                    raise ValueError
+
+            except ValueError:
+
+                return render_template(
+                    'sua_sach.html',
+                    sach=sach,
+                    danh_sach_theloai=danh_sach_theloai,
+                    error="Dữ liệu số không hợp lệ!"
+                )
+
+            success, message = dao.cap_nhat_sach(
+                sach_id=sach_id,
+                ten_sach=ten_sach,
+                tac_gia=tac_gia,
+                nha_xuat_ban=nha_xuat_ban,
+                nam_xuat_ban=nam_xuat_ban,
+                ngon_ngu=ngon_ngu,
+                so_trang=so_trang,
+                mo_ta=mo_ta,
+                theloai_id=theloai_id,
+                so_luong=so_luong,
+                anh_bia=anh_bia
+            )
+
+            if success:
+                return redirect(
+                    url_for('quan_ly_sach')
+                )
+
+            return render_template(
+                'sua_sach.html',
+                sach=sach,
+                danh_sach_theloai=danh_sach_theloai,
+                error=message
+            )
+
+        return render_template(
+            'sua_sach.html',
+            sach=sach,
+            danh_sach_theloai=danh_sach_theloai
+        )
+
+    @app.route(
+        '/admin/sach/<int:sach_id>/xoa',
+        methods=['POST']
+    )
+    @role_required(UserRole.ADMIN)
+    def xoa_sach(sach_id):
+
+        success, message = dao.xoa_sach(sach_id)
+
+        return redirect(
+            url_for('quan_ly_sach')
+        )
+
+    # ==========================================
+    # QUẢN LÝ NGƯỜI DÙNG - ADMIN
+    # ==========================================
+
+    @app.route('/admin/nguoi-dung')
+    @role_required(UserRole.ADMIN)
+    def quan_ly_nguoi_dung():
+
+        danh_sach_user = dao.get_all_users()
+
+        return render_template(
+            'quan_li_nguoi_dung.html',
+            danh_sach_user=danh_sach_user
+        )
+
+    @app.route(
+        '/admin/nguoi-dung/<int:user_id>/khoa',
+        methods=['POST']
+    )
+    @role_required(UserRole.ADMIN)
+    def khoa_nguoi_dung(user_id):
+
+        dao.khoa_user(user_id)
+
+        return redirect(
+            url_for('quan_ly_nguoi_dung')
+        )
+
+    @app.route(
+        '/admin/nguoi-dung/<int:user_id>/mo-khoa',
+        methods=['POST']
+    )
+    @role_required(UserRole.ADMIN)
+    def mo_khoa_nguoi_dung(user_id):
+
+        dao.mo_khoa_user(user_id)
+
+        return redirect(
+            url_for('quan_ly_nguoi_dung')
+        )
+
+    @app.route(
+        '/admin/nguoi-dung/<int:user_id>/xoa',
+        methods=['POST']
+    )
+    @role_required(UserRole.ADMIN)
+    def xoa_nguoi_dung(user_id):
+
+        dao.xoa_user(user_id)
+
+        return redirect(
+            url_for('quan_ly_nguoi_dung')
+        )
+
+    @app.route('/admin/sach/import', methods=['GET', 'POST'])
+    @role_required(UserRole.ADMIN)
+    def import_sach_excel():
+
+        if request.method == 'POST':
+            file = request.files.get('file')
+
+            if not file or file.filename == '':
+                return render_template(
+                    'import_sach.html',
+                    message="Vui lòng chọn file Excel!"
+                )
+
+            if not file.filename.lower().endswith(('.xlsx', '.xlsm')):
+                return render_template(
+                    'import_sach.html',
+                    message="Chỉ chấp nhận file Excel .xlsx hoặc .xlsm!"
+                )
+
+            try:
+                wb = load_workbook(file, data_only=True)
+                ws = wb.active
+
+                danh_sach_sach = []
+
+                # Bỏ dòng tiêu đề
+                for row in ws.iter_rows(min_row=2, values_only=True):
+
+                    if not row[0]:
+                        continue
+
+                    ten_sach = str(row[0]).strip()
+                    tac_gia = str(row[1]).strip() if row[1] else ""
+
+                    nha_xuat_ban = str(row[2]).strip() if row[2] else None
+
+                    nam_xuat_ban = None
+                    if row[3]:
+                        try:
+                            nam_xuat_ban = int(row[3])
+                        except:
+                            nam_xuat_ban = None
+
+                    ngon_ngu = str(row[4]).strip() if row[4] else "Tiếng Việt"
+
+                    so_trang = None
+                    if row[5]:
+                        try:
+                            so_trang = int(row[5])
+                        except:
+                            so_trang = None
+
+                    theloai_id = None
+                    if row[6]:
+                        try:
+                            theloai_id = int(row[6])
+                        except:
+                            theloai_id = None
+
+                    so_luong = 0
+                    if row[7]:
+                        try:
+                            so_luong = int(row[7])
+                        except:
+                            so_luong = 0
+
+                    anh_bia = str(row[8]).strip() if row[8] else None
+                    mo_ta = str(row[9]).strip() if row[9] else None
+
+                    if not tac_gia:
+                        continue
+
+                    danh_sach_sach.append({
+                        "ten_sach": ten_sach,
+                        "tac_gia": tac_gia,
+                        "nha_xuat_ban": nha_xuat_ban,
+                        "nam_xuat_ban": nam_xuat_ban,
+                        "ngon_ngu": ngon_ngu,
+                        "so_trang": so_trang,
+                        "theloai_id": theloai_id,
+                        "so_luong": so_luong,
+                        "anh_bia": anh_bia,
+                        "mo_ta": mo_ta
+                    })
+
+                if not danh_sach_sach:
+                    return render_template(
+                        'import_sach.html',
+                        message="File Excel không có dữ liệu hợp lệ!"
+                    )
+
+                success, message = dao.import_sach_tu_excel(danh_sach_sach)
+
+                return render_template(
+                    'import_sach.html',
+                    message=message,
+                    success=success
+                )
+
+            except Exception as e:
+                print("LỖI ĐỌC FILE EXCEL:", repr(e))
+
+                return render_template(
+                    'import_sach.html',
+                    message="Không thể đọc file Excel!"
+                )
+
+        return render_template('import_sach.html')
+
+    @app.route('/admin/the-loai')
+    @role_required(UserRole.ADMIN)
+    def quan_ly_the_loai():
+        danh_sach_the_loai = dao.get_all_theloai()
+
+        return render_template(
+            'quan_li_the_loai.html',
+            danh_sach_the_loai=danh_sach_the_loai
+        )
+
+    @app.route('/admin/the-loai/them', methods=['GET', 'POST'])
+    @role_required(UserRole.ADMIN)
+    def them_the_loai():
+        if request.method == 'POST':
+            ten_the_loai = request.form.get('ten_the_loai', '').strip()
+            mo_ta = request.form.get('mo_ta', '').strip()
+
+            success, message = dao.them_theloai(
+                ten_the_loai,
+                mo_ta
+            )
+
+            if success:
+                return redirect(url_for('quan_ly_the_loai'))
+
+            return render_template(
+                'them_the_loai.html',
+                message=message
+            )
+
+        return render_template('them_the_loai.html')
+
+    @app.route('/admin/the-loai/<int:theloai_id>/sua', methods=['GET', 'POST'])
+    @role_required(UserRole.ADMIN)
+    def sua_the_loai(theloai_id):
+        the_loai = TheLoai.query.get(theloai_id)
+
+        if not the_loai:
+            abort(404)
+
+        if request.method == 'POST':
+            ten_the_loai = request.form.get('ten_the_loai', '').strip()
+            mo_ta = request.form.get('mo_ta', '').strip()
+
+            success, message = dao.cap_nhat_theloai(
+                theloai_id,
+                ten_the_loai,
+                mo_ta
+            )
+
+            if success:
+                return redirect(url_for('quan_ly_the_loai'))
+
+            return render_template(
+                'sua_the_loai.html',
+                the_loai=the_loai,
+                message=message
+            )
+
+        return render_template(
+            'sua_the_loai.html',
+            the_loai=the_loai
+        )
+
+    @app.route('/admin/the-loai/<int:theloai_id>/xoa', methods=['POST'])
+    @role_required(UserRole.ADMIN)
+    def xoa_the_loai(theloai_id):
+        success, message = dao.xoa_theloai(theloai_id)
+
+        return redirect(url_for('quan_ly_the_loai'))
+
 
 
 @login.user_loader

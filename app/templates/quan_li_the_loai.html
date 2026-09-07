@@ -1,0 +1,145 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Quản lý thể loại{% endblock %}
+
+{% block content %}
+
+<div class="min-h-screen bg-slate-50 pt-28 pb-16">
+
+    <div class="max-w-6xl mx-auto px-6">
+
+        <div class="flex justify-between items-center mb-8">
+
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800">
+                    📚 Quản lý thể loại
+                </h1>
+
+                <p class="text-slate-500 mt-2">
+                    Quản lý danh sách thể loại sách
+                </p>
+            </div>
+
+            <a href="{{ url_for('them_the_loai') }}"
+               class="px-5 py-3 rounded-xl bg-primary hover:bg-primaryHover text-white font-semibold">
+
+                ➕ Thêm thể loại
+
+            </a>
+
+        </div>
+
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+            <table class="w-full">
+
+                <thead class="bg-slate-100">
+
+                    <tr>
+
+                        <th class="px-6 py-4 text-left">
+                            ID
+                        </th>
+
+                        <th class="px-6 py-4 text-left">
+                            Tên thể loại
+                        </th>
+
+                        <th class="px-6 py-4 text-left">
+                            Mô tả
+                        </th>
+
+                        <th class="px-6 py-4 text-center">
+                            Thao tác
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for the_loai in danh_sach_the_loai %}
+
+                    <tr class="border-t border-slate-200">
+
+                        <td class="px-6 py-4">
+                            {{ the_loai.id }}
+                        </td>
+
+
+                        <td class="px-6 py-4 font-semibold">
+                            {{ the_loai.tenTheLoai }}
+                        </td>
+
+
+                        <td class="px-6 py-4 text-slate-600">
+                            {{ the_loai.moTa or '' }}
+                        </td>
+
+
+                        <td class="px-6 py-4">
+
+                            <div class="flex justify-center gap-3">
+
+                                <!-- SỬA -->
+                                <a href="{{ url_for('sua_the_loai', theloai_id=the_loai.id) }}"
+                                   class="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600">
+
+                                    Sửa
+
+                                </a>
+
+
+                                <!-- XÓA -->
+                                <form
+                                    action="{{ url_for('xoa_the_loai', theloai_id=the_loai.id) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Bạn có chắc muốn xóa thể loại này không?')"
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                                    >
+
+                                        Xóa
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="4"
+                            class="text-center py-8 text-slate-500">
+
+                            Chưa có thể loại nào.
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

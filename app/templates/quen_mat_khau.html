@@ -1,0 +1,167 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Quên mật khẩu{% endblock %}
+
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center bg-slate-50 pt-20 px-6">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+
+        <div class="text-center mb-8">
+
+            <div class="w-14 h-14 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <i data-lucide="key-round"
+                   class="w-7 h-7 text-primary"></i>
+            </div>
+
+            <h1 class="text-2xl font-bold text-gray-900">
+                Quên mật khẩu?
+            </h1>
+
+            <p class="text-sm text-gray-500 mt-2">
+                Chọn Email hoặc số điện thoại để nhận mã OTP.
+            </p>
+
+        </div>
+
+
+        <!-- HIỂN THỊ LỖI -->
+        {% if error %}
+        <div class="mb-5 p-3 bg-red-50 border border-red-200 rounded-xl">
+
+            <p class="text-sm text-red-600">
+                {{ error }}
+            </p>
+
+        </div>
+        {% endif %}
+
+
+        <form method="POST" class="space-y-5">
+
+            <!-- CHỌN PHƯƠNG THỨC -->
+            <div>
+
+                <label for="phuong_thuc"
+                       class="block text-sm font-medium text-gray-700 mb-2">
+
+                    Phương thức nhận mã
+
+                </label>
+
+                <select
+                    id="phuong_thuc"
+                    name="phuong_thuc"
+                    class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+
+                    <option value="email">
+                        Gửi mã qua Email
+                    </option>
+
+                    <option value="sms">
+                        Gửi mã qua SMS
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- EMAIL HOẶC SỐ ĐIỆN THOẠI -->
+            <div>
+
+                <label id="label_dinh_danh"
+                       for="dinh_danh"
+                       class="block text-sm font-medium text-gray-700 mb-2">
+
+                    Email
+
+                </label>
+
+
+                <input
+                    id="dinh_danh"
+                    name="dinh_danh"
+                    type="email"
+                    required
+                    placeholder="Nhập email của bạn"
+
+                    class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="w-full py-3.5 rounded-xl bg-primary text-white font-semibold hover:bg-primaryHover transition"
+            >
+
+                Gửi mã OTP
+
+            </button>
+
+        </form>
+
+
+        <div class="text-center mt-6">
+
+            <a href="{{ url_for('login_process') }}"
+               class="text-sm font-medium text-primary hover:text-primaryHover">
+
+                ← Quay lại đăng nhập
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- JAVASCRIPT ĐỔI EMAIL / SMS -->
+
+<script>
+
+    const phuongThuc = document.getElementById('phuong_thuc');
+
+    const dinhDanh = document.getElementById('dinh_danh');
+
+    const labelDinhDanh =
+        document.getElementById('label_dinh_danh');
+
+
+    phuongThuc.addEventListener('change', function () {
+
+        if (this.value === 'email') {
+
+            labelDinhDanh.innerText = 'Email';
+
+            dinhDanh.type = 'email';
+
+            dinhDanh.placeholder =
+                'Nhập email của bạn';
+
+        } else {
+
+            labelDinhDanh.innerText =
+                'Số điện thoại';
+
+            dinhDanh.type = 'text';
+
+            dinhDanh.placeholder =
+                'Nhập số điện thoại của bạn';
+
+        }
+
+        // Xóa dữ liệu cũ khi đổi phương thức
+        dinhDanh.value = '';
+
+    });
+
+</script>
+
+{% endblock %}

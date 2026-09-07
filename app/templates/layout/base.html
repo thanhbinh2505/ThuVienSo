@@ -60,6 +60,23 @@
     <a href="/#the-loai" class="hover:text-primary transition-colors">
         Thể loại
     </a>
+           {% if current_user.is_authenticated and current_user.role.name == 'ADMIN' %}
+
+<a href="{{ url_for('quan_ly_sach') }}"
+   class="hover:text-primary transition-colors">
+    📚 Quản lý sách
+</a>
+
+<a href="{{ url_for('quan_ly_nguoi_dung') }}"
+   class="hover:text-primary transition-colors">
+    👥 Người dùng
+</a>
+            <a href="{{ url_for('quan_ly_the_loai') }}"
+   class="hover:text-primary transition-colors">
+    🏷️  Quản lý thể loại
+</a>
+
+{% endif %}
 
     {% if current_user.is_authenticated and current_user.role.name == 'THUTHU' %}
     <a href="/thuthu" class="hover:text-primary transition-colors">

@@ -1,0 +1,93 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}
+Xác nhận OTP
+{% endblock %}
+
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center bg-slate-50 pt-20 px-6">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+
+        <div class="text-center mb-8">
+
+            <div class="w-14 h-14 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <i data-lucide="shield-check" class="w-7 h-7 text-primary"></i>
+            </div>
+
+            <h1 class="text-2xl font-bold text-gray-900">
+                Xác nhận mã OTP
+            </h1>
+
+            <p class="text-sm text-gray-500 mt-2">
+                Nhập mã OTP gồm 6 số đã được gửi đến Email hoặc SMS của bạn.
+            </p>
+
+        </div>
+
+
+        {% if error %}
+
+        <div class="mb-5 p-3 bg-red-50 border border-red-200 rounded-xl">
+
+            <p class="text-sm text-red-600">
+                {{ error }}
+            </p>
+
+        </div>
+
+        {% endif %}
+
+
+        <form method="POST" class="space-y-5">
+
+            <div>
+
+                <label
+                    for="otp"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                >
+                    Mã OTP
+                </label>
+
+                <input
+                    id="otp"
+                    name="otp"
+                    type="text"
+                    required
+                    maxlength="6"
+                    pattern="[0-9]{6}"
+                    placeholder="Nhập mã OTP gồm 6 số"
+                    class="block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-center text-lg tracking-widest text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="w-full py-3.5 rounded-xl bg-primary text-white font-semibold hover:bg-primaryHover transition"
+            >
+                Xác nhận OTP
+            </button>
+
+        </form>
+
+
+        <div class="text-center mt-6">
+
+            <a
+                href="{{ url_for('quen_mat_khau') }}"
+                class="text-sm font-medium text-primary hover:text-primaryHover"
+            >
+                ← Quay lại
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
