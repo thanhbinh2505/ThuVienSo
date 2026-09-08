@@ -12,6 +12,16 @@
             Quản lý thư viện
         </h1>
 
+        <a href="{{ url_for('du_doan_nhu_cau') }}"
+   class="inline-flex items-center gap-2 mt-4 px-5 py-3
+          bg-purple-600 text-white rounded-xl
+          font-semibold shadow-sm
+          hover:bg-purple-700 transition">
+
+    📈 Dự đoán nhu cầu sách
+
+</a>
+
         <p class="text-slate-500 mt-2">
             Xin chào {{ current_user.hoTen }}
         </p>

@@ -1275,14 +1275,99 @@ def register_routes(app):
 
         return redirect(url_for('quan_ly_the_loai'))
 
+    ## AI ##
+    @app.route('/api/tim-kiem-ngu-nghia')
+    def api_tim_kiem_ngu_nghia():
+
+        query = request.args.get(
+            'q',
+            ''
+        ).strip()
+
+        if not query:
+            return jsonify([])
+
+        danh_sach_sach = dao.tim_kiem_ngu_nghia(
+            query
+        )
+
+        return jsonify([
+            sach.to_dict()
+            for sach in danh_sach_sach
+        ])
+
+    @app.route('/thuthu/du-doan-nhu-cau')
+    def du_doan_nhu_cau():
+
+        if not current_user.is_authenticated:
+            return redirect(url_for('login_process'))
+
+        if current_user.role != UserRole.THUTHU:
+            abort(403)
+
+        danh_sach_du_doan = dao.du_doan_nhu_cau_muon_sach()
+
+        return render_template(
+            'du_doan_nhu_cau.html',
+            danh_sach_du_doan=danh_sach_du_doan
+        )
+
+    @app.route(
+        '/api/sach/<int:sach_id>/yeu-thich',
+        methods=['POST']
+    )
+    def api_toggle_yeu_thich(sach_id):
+
+        if not current_user.is_authenticated:
+            return jsonify({
+                "success": False,
+                "message": "Vui lòng đăng nhập!"
+            }), 401
+
+        sach = dao.get_sach_by_id(sach_id)
+
+        if not sach:
+            return jsonify({
+                "success": False,
+                "message": "Không tìm thấy sách!"
+            }), 404
+
+        da_yeu_thich, message = dao.toggle_yeu_thich(
+            current_user.id,
+            sach_id
+        )
+
+        return jsonify({
+            "success": True,
+            "message": message,
+            "da_yeu_thich": da_yeu_thich
+        }), 200
+
+    @app.route('/yeu-thich')
+    def danh_sach_yeu_thich():
+
+        if not current_user.is_authenticated:
+            return redirect(
+                url_for('login_process')
+            )
+
+        danh_sach = dao.get_danh_sach_yeu_thich(
+            current_user.id
+        )
+
+        return render_template(
+            'yeu_thich.html',
+            danh_sach=danh_sach
+        )
 
 
 @login.user_loader
 def load_user(id):
     return dao.get_user_by_id(id)
 
+register_routes(app)
 
 if __name__ == '__main__':
-    register_routes(app)
+
     with app.app_context():
         app.run(debug=True, port=5000)

@@ -4,21 +4,84 @@
 {% block content %}
 <section class="relative pt-32 pb-16 bg-gradient-to-br from-lightBg via-white to-white overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div id="tim-kiem" class="max-w-3xl mx-auto bg-white p-3 rounded-2xl shadow-soft border border-gray-100 flex flex-col sm:flex-row gap-3">
-            <div class="relative flex-1">
-                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
-                <input id="searchInput" type="text" placeholder="Tìm theo tên sách, tác giả, mô tả..."
-                       class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-sm">
+       <div class="max-w-3xl mx-auto">
+
+            <!-- CHỌN CHẾ ĐỘ TÌM KIẾM -->
+            <div class="flex justify-center gap-3 mb-4">
+
+                <button
+                    id="normalSearch"
+                    type="button"
+                    class="px-4 py-2 rounded-lg bg-primary text-white font-semibold"
+                >
+                    🔍 Tìm kiếm thường
+                </button>
+
+                <button
+                    id="semanticSearch"
+                    type="button"
+                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 font-semibold"
+                >
+                    ✨ Tìm kiếm ngữ nghĩa
+                </button>
+
             </div>
-            <select id="theloaiSelect" class="px-4 py-3.5 rounded-xl border border-gray-200 text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                <option value="">Tất cả thể loại</option>
-                {% for tl in ds_theloai %}
-                <option value="{{ tl.id }}">{{ tl.tenTheLoai }}</option>
-                {% endfor %}
-            </select>
-            <button id="btnSearch" class="bg-primary hover:bg-primaryHover text-white px-6 py-3.5 rounded-xl font-semibold shadow-btn transition-all shrink-0">
-                Tìm kiếm
-            </button>
+
+
+            <!-- Ô TÌM KIẾM -->
+            <div
+                id="tim-kiem"
+                class="bg-white p-3 rounded-2xl shadow-soft border border-gray-100 flex flex-col sm:flex-row gap-3"
+            >
+
+                <div class="relative flex-1">
+
+                    <i
+                        data-lucide="search"
+                        class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"
+                    ></i>
+
+                    <input
+                        id="searchInput"
+                        type="text"
+                        placeholder="Tìm theo tên sách, tác giả, mô tả..."
+                        class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200"
+                    >
+
+                </div>
+
+
+                <!-- THỂ LOẠI -->
+                <select
+                    id="theloaiSelect"
+                    class="px-4 py-3.5 rounded-xl border border-gray-200 text-sm text-slate-600"
+                >
+
+                    <option value="">
+                        Tất cả thể loại
+                    </option>
+
+                    {% for tl in ds_theloai %}
+
+                    <option value="{{ tl.id }}">
+                        {{ tl.tenTheLoai }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+
+                <!-- NÚT TÌM -->
+                <button
+                    id="btnSearch"
+                    class="bg-primary hover:bg-primaryHover text-white px-6 py-3.5 rounded-xl font-semibold shadow-btn transition-all shrink-0"
+                >
+                    Tìm kiếm
+                </button>
+
+            </div>
+
         </div>
     </div>
 </section>

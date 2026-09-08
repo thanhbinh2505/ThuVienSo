@@ -118,7 +118,9 @@
             </div>
 
             {% if current_user.is_authenticated and current_user.role.name == 'DOCGIA' %}
-<div class="mt-6">
+
+<div class="mt-6 flex flex-wrap gap-3">
+
     {% if sach.soLuongConLai > 0 %}
     <button
         id="btn-borrow"
@@ -137,8 +139,22 @@
     </button>
     {% endif %}
 
-    <p id="borrow-message" class="text-sm mt-3"></p>
+
+    <!-- NÚT YÊU THÍCH -->
+    <button
+        id="btn-favorite"
+        type="button"
+        class="px-6 py-3 bg-red-50 text-red-500 border border-red-200 rounded-xl font-semibold hover:bg-red-100 transition"
+    >
+        ❤️ Yêu thích
+    </button>
+
 </div>
+
+<p id="borrow-message" class="text-sm mt-3"></p>
+
+<p id="favorite-message" class="text-sm mt-2"></p>
+
 {% endif %}
 
 
@@ -300,12 +316,12 @@
                                       and current_user.id == bl.user_id %}
 
                                 <button
-                                    type="button"
-                                    onclick="xoaBinhLuan({{ bl.id }})"
-                                    class="text-sm text-red-500 hover:underline"
-                                >
-                                    Xóa
-                                </button>
+                    type="button"
+                    class="btn-delete-comment text-sm text-red-500 hover:underline"
+                    data-comment-id="{{ bl.id }}"
+                >
+                    Xóa
+                </button>
 
                                 {% endif %}
 
@@ -916,6 +932,113 @@ if (btnBorrow) {
     });
 
 }
+</script>
+
+<script>
+
+const btnFavorite =
+    document.getElementById('btn-favorite');
+
+const favoriteMessage =
+    document.getElementById('favorite-message');
+
+
+if (btnFavorite) {
+
+    btnFavorite.addEventListener(
+        'click',
+        async function () {
+
+            btnFavorite.disabled = true;
+
+            try {
+
+                const response =
+                    await fetch(
+                        '/api/sach/{{ sach.id }}/yeu-thich',
+                        {
+                            method: 'POST'
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+
+                if (data.success) {
+
+                    favoriteMessage.textContent =
+                        '✓ ' + data.message;
+
+                    favoriteMessage.className =
+                        'text-sm mt-2 text-green-600 font-semibold';
+
+
+                    if (data.da_yeu_thich) {
+
+                        btnFavorite.innerHTML =
+                            '❤️ Đã yêu thích';
+
+                        btnFavorite.classList.remove(
+                            'bg-red-50',
+                            'text-red-500',
+                            'border-red-200'
+                        );
+
+                        btnFavorite.classList.add(
+                            'bg-red-500',
+                            'text-white'
+                        );
+
+                    } else {
+
+                        btnFavorite.innerHTML =
+                            '🤍 Yêu thích';
+
+                        btnFavorite.classList.remove(
+                            'bg-red-500',
+                            'text-white'
+                        );
+
+                        btnFavorite.classList.add(
+                            'bg-red-50',
+                            'text-red-500',
+                            'border-red-200'
+                        );
+
+                    }
+
+                } else {
+
+                    favoriteMessage.textContent =
+                        data.message;
+
+                    favoriteMessage.className =
+                        'text-sm mt-2 text-red-500';
+
+                }
+
+            } catch (error) {
+
+                console.error(error);
+
+                favoriteMessage.textContent =
+                    'Có lỗi xảy ra khi cập nhật yêu thích!';
+
+                favoriteMessage.className =
+                    'text-sm mt-2 text-red-500';
+
+            } finally {
+
+                btnFavorite.disabled = false;
+
+            }
+
+        }
+    );
+
+}
+
 </script>
 
 {% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}
+Sách yêu thích
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
+
+    <!-- Tiêu đề -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-slate-800">
+            ❤️ Sách yêu thích của tôi
+        </h2>
+
+        <p class="text-slate-500 mt-2">
+            Danh sách những cuốn sách bạn đã lưu yêu thích.
+        </p>
+    </div>
+
+    {% if danh_sach %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            {% for sach in danh_sach %}
+
+            <div class="bg-white rounded-2xl shadow-soft border border-slate-100 overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+
+                <!-- Ảnh bìa -->
+                {% if sach.anhBia %}
+
+                <img src="{{ sach.anhBia }}"
+                     class="w-full h-72 object-cover"
+                     alt="{{ sach.tenSach }}">
+
+                {% else %}
+
+                <div class="w-full h-72 bg-slate-100 flex items-center justify-center text-slate-400">
+                    📚 Chưa có ảnh bìa
+                </div>
+
+                {% endif %}
+
+                <!-- Nội dung -->
+                <div class="p-5">
+
+                    <h5 class="font-bold text-lg text-slate-800 line-clamp-2">
+                        {{ sach.tenSach }}
+                    </h5>
+
+                    <p class="text-slate-500 text-sm mt-2 mb-4">
+                        ✍️ {{ sach.tacGia }}
+                    </p>
+
+                    <a href="{{ url_for('chi_tiet_sach', sach_id=sach.id) }}"
+                       class="inline-flex items-center justify-center w-full px-4 py-2.5 bg-primary hover:bg-primaryHover text-white rounded-xl font-semibold transition-all">
+
+                        Xem chi tiết
+
+                    </a>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <!-- Chưa có sách yêu thích -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-soft">
+
+            <div class="text-5xl mb-4">
+                💔
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-700">
+                Chưa có sách yêu thích
+            </h3>
+
+            <p class="text-slate-500 mt-2">
+                Bạn chưa thêm cuốn sách nào vào danh sách yêu thích.
+            </p>
+
+            <a href="/"
+               class="inline-block mt-6 px-6 py-3 bg-primary hover:bg-primaryHover text-white rounded-xl font-semibold transition-all">
+
+                Khám phá sách
+
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

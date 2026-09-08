@@ -215,6 +215,37 @@ class LichSuXem(BaseModel):
         'Sach',
         backref='danh_sach_nguoi_da_xem'
     )
+class YeuThich(db.Model):
+    __tablename__ = 'yeu_thich'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id'),
+        nullable=False
+    )
+
+    sach_id = db.Column(
+        db.Integer,
+        db.ForeignKey('sach.id'),
+        nullable=False
+    )
+
+    ngay_tao = db.Column(
+        db.DateTime,
+        default=datetime.now
+    )
+
+    user = db.relationship(
+        'User',
+        backref='danh_sach_yeu_thich'
+    )
+
+    sach = db.relationship(
+        'Sach',
+        backref='duoc_yeu_thich'
+    )
 
 if __name__ == '__main__':
     with app.app_context():

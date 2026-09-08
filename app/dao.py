@@ -2,10 +2,28 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import or_
 
+from sklearn.linear_model import LinearRegression
+from collections import defaultdict
+from app.models import PhieuMuon, TrangThaiMuon, YeuThich
 from app import db
 from app.models import (OAuthProvider, Sach, TheLoai, User, UserRole,
                         DanhGia, BinhLuan, TrangThaiMuon, PhieuMuon, LichSuXem)
 
+import numpy as np
+from sentence_transformers import SentenceTransformer
+model_semantic = None
+
+def get_model_semantic():
+    global model_semantic
+
+    if model_semantic is None:
+        print("Đang tải AI model...")
+        model_semantic = SentenceTransformer(
+            "paraphrase-multilingual-MiniLM-L12-v2"
+        )
+        print("Đã tải AI model!")
+
+    return model_semantic
 
 def commit():
     db.session.commit()
@@ -1080,3 +1098,326 @@ def get_sach_goi_y(user_id, limit=8):
         Sach.diemDanhGiaTB.desc(),
         Sach.soLuotDanhGia.desc()
     ).limit(limit).all()
+
+## AI ##
+def tim_kiem_ngu_nghia(query, limit=20):
+
+    # Kiểm tra từ khóa
+    if not query or not query.strip():
+        return []
+
+    # Chuẩn hóa từ khóa
+    query = query.strip()
+
+    # Lấy tất cả sách
+    danh_sach_sach = Sach.query.all()
+
+    if not danh_sach_sach:
+        return []
+
+    danh_sach_text = []
+
+    # =========================
+    # TẠO NỘI DUNG CHO AI HIỂU
+    # =========================
+
+    for sach in danh_sach_sach:
+
+        the_loai = ""
+
+        # Lấy tên thể loại
+        if sach.theloai_id:
+
+            theloai_obj = TheLoai.query.get(
+                sach.theloai_id
+            )
+
+            if theloai_obj:
+                the_loai = (
+                    theloai_obj.tenTheLoai
+                    or ""
+                )
+
+        # Tạo nội dung mô tả sách
+        text = f"""
+        Tên sách: {sach.tenSach or ''}
+        Tác giả: {sach.tacGia or ''}
+        Thể loại: {the_loai}
+        Mô tả: {sach.moTa or ''}
+        """
+
+        danh_sach_text.append(
+            text.strip()
+        )
+
+    # =========================
+    # TẠO VECTOR CHO TỪ KHÓA
+    # =========================
+    model = get_model_semantic()
+
+    query_embedding = model_semantic.encode(
+        query,
+        convert_to_numpy=True
+    )
+
+    # =========================
+    # TẠO VECTOR CHO SÁCH
+    # =========================
+
+    sach_embeddings = model.encode(
+        danh_sach_text,
+        convert_to_numpy=True
+    )
+
+    # =========================
+    # TÍNH COSINE SIMILARITY
+    # =========================
+
+    query_norm = np.linalg.norm(
+        query_embedding
+    )
+
+    sach_norms = np.linalg.norm(
+        sach_embeddings,
+        axis=1
+    )
+
+    scores = np.dot(
+        sach_embeddings,
+        query_embedding
+    ) / (
+        sach_norms * query_norm + 1e-10
+    )
+
+    # =========================
+    # GHÉP SÁCH VỚI ĐIỂM
+    # =========================
+
+    ket_qua = list(
+        zip(
+            danh_sach_sach,
+            scores
+        )
+    )
+
+    # Sắp xếp điểm từ cao xuống thấp
+    ket_qua.sort(
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    # =========================
+    # DEBUG
+    # =========================
+
+    print("\n===== KẾT QUẢ TÌM KIẾM NGỮ NGHĨA =====")
+
+    for sach, score in ket_qua[:10]:
+
+        print(
+            sach.tenSach,
+            "→",
+            round(float(score), 3)
+        )
+
+    # =========================
+    # LỌC KẾT QUẢ
+    # =========================
+
+    sach_phu_hop = []
+
+    if not ket_qua:
+        return []
+
+    # Điểm cao nhất
+    diem_cao_nhat = float(
+        ket_qua[0][1]
+    )
+
+    # Ngưỡng tối thiểu
+    nguong_toi_thieu = 0.20
+
+    # Chỉ lấy các sách gần với điểm cao nhất
+    chenh_lech_toi_da = 0.10
+
+    for sach, score in ket_qua:
+
+        score = float(score)
+
+        # Điểm quá thấp thì bỏ
+        if score < nguong_toi_thieu:
+            continue
+
+        # Chênh lệch quá xa kết quả cao nhất thì bỏ
+        if (
+            diem_cao_nhat - score
+            > chenh_lech_toi_da
+        ):
+            continue
+
+        sach_phu_hop.append(
+            sach
+        )
+
+    return sach_phu_hop[:limit]
+
+def du_doan_nhu_cau_muon_sach():
+
+    # Lấy các phiếu đã thực sự được mượn
+    danh_sach_phieu = PhieuMuon.query.filter(
+        PhieuMuon.trangThai.in_([
+            TrangThaiMuon.DA_DUYET,
+            TrangThaiMuon.DA_TRA
+        ]),
+        PhieuMuon.ngayMuon.isnot(None)
+    ).all()
+
+    # Nếu chưa có dữ liệu mượn
+    if not danh_sach_phieu:
+        return []
+
+    # Gom số lượt mượn theo từng sách và từng tháng
+    du_lieu_sach = defaultdict(lambda: defaultdict(int))
+
+    for phieu in danh_sach_phieu:
+
+        sach_id = phieu.sach_id
+
+        # Ví dụ: 2026-09
+        thang = phieu.ngayMuon.strftime("%Y-%m")
+
+        du_lieu_sach[sach_id][thang] += 1
+
+    ket_qua = []
+
+    # Phân tích từng cuốn sách
+    for sach_id, du_lieu_thang in du_lieu_sach.items():
+
+        sach = Sach.query.get(sach_id)
+
+        if not sach:
+            continue
+
+        # Sắp xếp theo thời gian
+        danh_sach_thang = sorted(
+            du_lieu_thang.items()
+        )
+
+        # X = số thứ tự tháng
+        X = []
+
+        # y = số lượt mượn
+        y = []
+
+        for index, (thang, so_luot) in enumerate(
+            danh_sach_thang
+        ):
+
+            X.append([index])
+            y.append(so_luot)
+
+        # Mặc định dự đoán
+        du_doan = 0
+        xu_huong = "Ổn định"
+
+        # Nếu có từ 2 tháng dữ liệu trở lên
+        if len(X) >= 2:
+
+            model = LinearRegression()
+
+            model.fit(X, y)
+
+            # Dự đoán tháng tiếp theo
+            du_doan = model.predict(
+                [[len(X)]]
+            )[0]
+
+            du_doan = max(
+                0,
+                round(float(du_doan))
+            )
+
+            # Kiểm tra xu hướng
+            he_so = model.coef_[0]
+
+            if he_so > 0.5:
+                xu_huong = "Tăng"
+            elif he_so < -0.5:
+                xu_huong = "Giảm"
+
+        else:
+            # Nếu mới chỉ có 1 tháng dữ liệu
+            du_doan = y[0]
+
+        # Tổng số lượt mượn
+        tong_luot_muon = sum(y)
+
+        # Đề xuất nhập thêm
+        if (
+            du_doan > sach.soLuongConLai
+            and du_doan >= 3
+        ):
+            de_xuat = "Nên nhập thêm"
+            muc_do = "Cao"
+
+        elif du_doan >= 3:
+            de_xuat = "Theo dõi nhu cầu"
+            muc_do = "Trung bình"
+
+        else:
+            de_xuat = "Chưa cần nhập thêm"
+            muc_do = "Thấp"
+
+        ket_qua.append({
+            "sach": sach,
+            "tong_luot_muon": tong_luot_muon,
+            "du_doan": du_doan,
+            "xu_huong": xu_huong,
+            "muc_do": muc_do,
+            "de_xuat": de_xuat
+        })
+
+    # Sắp xếp sách có nhu cầu cao nhất lên đầu
+    ket_qua.sort(
+        key=lambda x: x["du_doan"],
+        reverse=True
+    )
+
+    return ket_qua
+
+def toggle_yeu_thich(user_id, sach_id):
+
+    yeu_thich = YeuThich.query.filter_by(
+        user_id=user_id,
+        sach_id=sach_id
+    ).first()
+
+    if yeu_thich:
+        db.session.delete(yeu_thich)
+        db.session.commit()
+
+        return False, "Đã xóa khỏi danh sách yêu thích!"
+
+    yeu_thich = YeuThich(
+        user_id=user_id,
+        sach_id=sach_id
+    )
+
+    db.session.add(yeu_thich)
+    db.session.commit()
+
+    return True, "Đã thêm vào danh sách yêu thích!"
+
+def get_danh_sach_yeu_thich(user_id):
+
+    danh_sach_yeu_thich = YeuThich.query.filter_by(
+        user_id=user_id
+    ).order_by(
+        YeuThich.ngay_tao.desc()
+    ).all()
+
+    return [
+        item.sach
+        for item in danh_sach_yeu_thich
+        if item.sach
+    ]

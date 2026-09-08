@@ -1,0 +1,395 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}
+Dự đoán nhu cầu sách
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="mb-8">
+
+        <a href="{{ url_for('trang_thu_thu') }}"
+           class="inline-flex items-center gap-2 text-sm font-medium
+                  text-purple-600 hover:text-purple-800 mb-5 transition">
+
+            ← Quay lại quản lý thư viện
+
+        </a>
+
+        <h1 class="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
+            <span>📈</span>
+            Dự đoán nhu cầu mượn sách
+        </h1>
+
+        <p class="text-slate-500 mt-3 max-w-3xl leading-relaxed">
+            Hệ thống phân tích lịch sử mượn sách để hỗ trợ thủ thư
+            xác định những đầu sách có nhu cầu cao, dự đoán nhu cầu
+            trong thời gian tới và đưa ra đề xuất nhập thêm sách.
+        </p>
+
+    </div>
+
+
+    {% if danh_sach_du_doan %}
+
+    <!-- THỐNG KÊ NHANH -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+
+        <!-- SỐ SÁCH ĐƯỢC PHÂN TÍCH -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+
+            <p class="text-sm text-slate-500">
+                Sách được phân tích
+            </p>
+
+            <p class="text-3xl font-bold text-slate-800 mt-2">
+                {{ danh_sach_du_doan|length }}
+            </p>
+
+            <p class="text-xs text-slate-400 mt-2">
+                Dựa trên lịch sử mượn sách
+            </p>
+
+        </div>
+
+
+        <!-- CẦN NHẬP THÊM -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+
+            <p class="text-sm text-slate-500">
+                Sách có nhu cầu cao
+            </p>
+
+            <p class="text-3xl font-bold text-red-500 mt-2">
+                {{ danh_sach_du_doan
+                    | selectattr('muc_do', 'equalto', 'Cao')
+                    | list
+                    | length }}
+            </p>
+
+            <p class="text-xs text-slate-400 mt-2">
+                Có thể cần nhập thêm
+            </p>
+
+        </div>
+
+
+        <!-- TỔNG LƯỢT MƯỢN -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+
+            <p class="text-sm text-slate-500">
+                Tổng lượt mượn
+            </p>
+
+            <p class="text-3xl font-bold text-purple-600 mt-2">
+                {{ danh_sach_du_doan
+                    | map(attribute='tong_luot_muon')
+                    | sum }}
+            </p>
+
+            <p class="text-xs text-slate-400 mt-2">
+                Tổng dữ liệu được phân tích
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- BẢNG DỰ ĐOÁN -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+        <!-- HEADER BẢNG -->
+        <div class="p-6 border-b border-gray-100">
+
+            <h2 class="text-xl font-bold text-slate-800">
+                📊 Kết quả dự đoán
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Danh sách được sắp xếp theo nhu cầu dự đoán từ cao xuống thấp.
+            </p>
+
+        </div>
+
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <!-- HEADER -->
+                <thead class="bg-slate-50">
+
+                    <tr>
+
+                        <th class="text-center px-4 py-4 font-semibold text-slate-600">
+                            #
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Tên sách
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
+                            Tác giả
+                        </th>
+
+                        <th class="text-center px-6 py-4 font-semibold text-slate-600">
+                            Tổng lượt mượn
+                        </th>
+
+                        <th class="text-center px-6 py-4 font-semibold text-slate-600">
+                            Sách còn lại
+                        </th>
+
+                        <th class="text-center px-6 py-4 font-semibold text-slate-600">
+                            Dự đoán
+                        </th>
+
+                        <th class="text-center px-6 py-4 font-semibold text-slate-600">
+                            Xu hướng
+                        </th>
+
+                        <th class="text-center px-6 py-4 font-semibold text-slate-600">
+                            Đề xuất
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <!-- BODY -->
+                <tbody>
+
+                    {% for item in danh_sach_du_doan %}
+
+                    <tr class="border-t border-gray-100 hover:bg-slate-50 transition">
+
+                        <!-- STT -->
+                        <td class="text-center px-4 py-5 text-slate-500 font-semibold">
+
+                            {{ loop.index }}
+
+                        </td>
+
+
+                        <!-- TÊN SÁCH -->
+                        <td class="px-6 py-5">
+
+                            <p class="font-bold text-slate-800">
+                                {{ item.sach.tenSach }}
+                            </p>
+
+                            {% if item.sach.the_loai %}
+
+                            <p class="text-xs text-slate-400 mt-1">
+
+                                {{ item.sach.the_loai.tenTheLoai }}
+
+                            </p>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- TÁC GIẢ -->
+                        <td class="px-6 py-5 text-slate-600">
+
+                            {{ item.sach.tacGia }}
+
+                        </td>
+
+
+                        <!-- TỔNG LƯỢT MƯỢN -->
+                        <td class="text-center px-6 py-5">
+
+                            <span class="inline-flex items-center
+                                         px-3 py-1 rounded-full
+                                         bg-blue-50 text-blue-600
+                                         font-semibold">
+
+                                {{ item.tong_luot_muon }}
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- SÁCH CÒN LẠI -->
+                        <td class="text-center px-6 py-5">
+
+                            {% if item.sach.soLuongConLai <= 2 %}
+
+                                <span class="font-bold text-red-500">
+
+                                    {{ item.sach.soLuongConLai }}
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="font-semibold text-slate-700">
+
+                                    {{ item.sach.soLuongConLai }}
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- DỰ ĐOÁN -->
+                        <td class="text-center px-6 py-5">
+
+                            <span class="text-lg font-extrabold text-purple-600">
+
+                                {{ item.du_doan }}
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- XU HƯỚNG -->
+                        <td class="text-center px-6 py-5">
+
+                            {% if item.xu_huong == "Tăng" %}
+
+                                <span class="inline-flex items-center gap-1
+                                             px-3 py-1 rounded-full
+                                             bg-green-100 text-green-700
+                                             text-xs font-bold">
+
+                                    📈 Tăng
+
+                                </span>
+
+
+                            {% elif item.xu_huong == "Giảm" %}
+
+                                <span class="inline-flex items-center gap-1
+                                             px-3 py-1 rounded-full
+                                             bg-red-100 text-red-600
+                                             text-xs font-bold">
+
+                                    📉 Giảm
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span class="inline-flex items-center gap-1
+                                             px-3 py-1 rounded-full
+                                             bg-slate-100 text-slate-600
+                                             text-xs font-bold">
+
+                                    ➖ Ổn định
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ĐỀ XUẤT -->
+                        <td class="text-center px-6 py-5">
+
+                            {% if item.muc_do == "Cao" %}
+
+                                <span class="inline-flex items-center
+                                             px-3 py-1 rounded-full
+                                             bg-red-100 text-red-600
+                                             text-xs font-bold">
+
+                                    🔥 {{ item.de_xuat }}
+
+                                </span>
+
+
+                            {% elif item.muc_do == "Trung bình" %}
+
+                                <span class="inline-flex items-center
+                                             px-3 py-1 rounded-full
+                                             bg-amber-100 text-amber-700
+                                             text-xs font-bold">
+
+                                    ⚠ {{ item.de_xuat }}
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span class="inline-flex items-center
+                                             px-3 py-1 rounded-full
+                                             bg-green-100 text-green-700
+                                             text-xs font-bold">
+
+                                    ✓ {{ item.de_xuat }}
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    {% else %}
+
+    <!-- CHƯA CÓ DỮ LIỆU -->
+
+    <div class="bg-white border border-gray-100
+                rounded-2xl shadow-sm p-10 text-center">
+
+        <div class="text-6xl mb-5">
+            📊
+        </div>
+
+        <h3 class="text-xl font-bold text-slate-800">
+            Chưa có đủ dữ liệu để dự đoán
+        </h3>
+
+        <p class="text-slate-500 mt-3 max-w-lg mx-auto leading-relaxed">
+            Hệ thống cần có lịch sử mượn sách để phân tích xu hướng
+            và dự đoán nhu cầu của độc giả.
+        </p>
+
+        <a href="{{ url_for('trang_thu_thu') }}"
+           class="inline-flex items-center justify-center
+                  mt-7 px-6 py-3
+                  bg-purple-600 text-white
+                  rounded-xl font-semibold
+                  hover:bg-purple-700
+                  transition shadow-sm">
+
+            ← Quay lại trang thủ thư
+
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -45,10 +45,17 @@
         </a>
 
         <nav class="hidden md:flex items-center gap-8 font-medium text-slate-600">
-            {% if current_user.is_authenticated and current_user.role.name == 'DOCGIA' %}
+           {% if current_user.is_authenticated and current_user.role.name == 'DOCGIA' %}
+
 <a href="/sach-dang-muon" class="hover:text-primary transition-colors">
     📖 Sách đang mượn
 </a>
+
+<a href="{{ url_for('danh_sach_yeu_thich') }}"
+   class="hover:text-primary transition-colors">
+    ❤️ Yêu thích
+</a>
+
 {% endif %}
 
     <a href="/" class="hover:text-primary transition-colors">Trang chủ</a>
