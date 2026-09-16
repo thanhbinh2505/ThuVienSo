@@ -5,8 +5,6 @@
 {% block content %}
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-
-    <!-- Breadcrumb -->
     <nav class="flex text-sm text-slate-500 font-medium mb-8 items-center">
 
         <a href="/" class="hover:text-primary flex items-center gap-1 transition-colors">
@@ -30,74 +28,43 @@
 
     </nav>
 
-
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-
-        <!-- ẢNH SÁCH -->
         <div class="lg:col-span-4">
-
             <div class="sticky top-28">
-
                 <div class="rounded-2xl overflow-hidden shadow-soft border border-gray-100 bg-white">
-
                     <img
                         src="{{ sach.anhBia }}"
                         alt="{{ sach.tenSach }}"
                         class="w-full aspect-[3/4] object-cover"
-                        onerror="this.src='/static/image/default.png'"
-                    >
-
+                        onerror="this.src='/static/image/default.png'">
                 </div>
-
             </div>
-
         </div>
-
-
-        <!-- THÔNG TIN SÁCH -->
         <div class="lg:col-span-8">
-
             <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2">
                 {{ sach.tenSach }}
             </h1>
-
             <p class="text-lg text-slate-500 mb-4">
                 Tác giả:
                 <span class="font-semibold text-slate-700">
                     {{ sach.tacGia }}
                 </span>
             </p>
-
-
-            <!-- ĐIỂM ĐÁNH GIÁ -->
             <div class="flex flex-wrap items-center gap-4 mb-6">
-
                 <div class="flex items-center gap-1 text-amber-500 font-bold">
-
-                    <i
-                        data-lucide="star"
-                        class="w-5 h-5 fill-current"
-                    ></i>
-
+                    <i data-lucide="star" class="w-5 h-5 fill-current"></i>
                     <span id="average-rating">
                         {{ "%.1f"|format(sach.diemDanhGiaTB or 0) }}
                     </span>
-
                     <span class="text-slate-400 font-normal text-sm">
                         / 5
                     </span>
-
                     <span
                         id="rating-count"
-                        class="text-slate-400 font-normal text-sm"
-                    >
+                        class="text-slate-400 font-normal text-sm">
                         ({{ sach.soLuotDanhGia or 0 }} lượt đánh giá)
                     </span>
-
                 </div>
-
-
-                <!-- TRẠNG THÁI SÁCH -->
                 <span
                     class="px-3 py-1 rounded-full text-xs font-bold
                     {% if sach.soLuongConLai > 0 %}
@@ -112,116 +79,70 @@
                         if sach.soLuongConLai > 0
                         else 'Hết sách'
                     }}
-
                 </span>
-
             </div>
-
             {% if current_user.is_authenticated and current_user.role.name == 'DOCGIA' %}
-
 <div class="mt-6 flex flex-wrap gap-3">
-
     {% if sach.soLuongConLai > 0 %}
     <button
         id="btn-borrow"
         type="button"
-        class="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition"
-    >
+        class="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition">
         📚 Đăng ký mượn sách
     </button>
     {% else %}
     <button
         type="button"
         disabled
-        class="px-6 py-3 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed"
-    >
+        class="px-6 py-3 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed">
         Hết sách
     </button>
     {% endif %}
-
-
-    <!-- NÚT YÊU THÍCH -->
     <button
         id="btn-favorite"
         type="button"
-        class="px-6 py-3 bg-red-50 text-red-500 border border-red-200 rounded-xl font-semibold hover:bg-red-100 transition"
-    >
+        class="px-6 py-3 bg-red-50 text-red-500 border border-red-200 rounded-xl font-semibold hover:bg-red-100 transition">
         ❤️ Yêu thích
     </button>
-
 </div>
-
 <p id="borrow-message" class="text-sm mt-3"></p>
-
 <p id="favorite-message" class="text-sm mt-2"></p>
-
 {% endif %}
-
-
-            <!-- ĐÁNH GIÁ SÁCH -->
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-
                 <h2 class="text-lg font-bold text-slate-800 mb-3">
                     Đánh giá sách
                 </h2>
-
-
                 {% if current_user.is_authenticated %}
-
                 <p class="text-sm text-slate-500 mb-3">
                     Hãy chọn số sao để đánh giá cuốn sách này
                 </p>
-
-
                 <div
                     class="flex gap-2"
-                    id="rating-stars"
-                >
-
+                    id="rating-stars">
                     {% for i in range(1, 6) %}
-
                     <button
                         type="button"
                         class="rating-star text-gray-300 hover:text-amber-400 transition text-3xl"
-                        data-rating="{{ i }}"
-                    >
+                        data-rating="{{ i }}">
                         ★
                     </button>
-
                     {% endfor %}
-
                 </div>
-
-
                 <p
                     id="rating-message"
                     class="text-sm mt-3"
                 ></p>
-
-
                 {% else %}
-
                 <p class="text-slate-500">
-
                     Bạn cần
-
                     <a
                         href="{{ url_for('login_process') }}"
-                        class="text-primary font-semibold hover:underline"
-                    >
+                        class="text-primary font-semibold hover:underline">
                         đăng nhập
                     </a>
-
-                    để đánh giá sách.
-
-                </p>
-
+                    để đánh giá sách.</p>
                 {% endif %}
-
             </div>
-
-
-            <!-- BÌNH LUẬN SÁCH -->
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
 
                 <h2 class="text-lg font-bold text-slate-800 mb-4">

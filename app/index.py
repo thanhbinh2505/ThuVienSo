@@ -23,7 +23,9 @@ def register_routes(app):
     def index():
         ds_theloai = dao.get_list_theloai()
 
+        theloai_id = request.args.get('theloai_id', type=int)
         ket_qua = dao.tim_kiem_sach(
+            theloai_id=theloai_id,
             page=1,
             page_size=12
         )
@@ -41,6 +43,17 @@ def register_routes(app):
             ket_qua=ket_qua,
             sach_goi_y=sach_goi_y
         )
+
+    @app.route('/the-loai')
+    def danh_sach_the_loai():
+        ds_the_loai = dao.get_list_theloai()
+        return render_template('the_loai.html', ds_the_loai=ds_the_loai)
+
+    @app.route('/ho-so')
+    @role_required([UserRole.ADMIN, UserRole.THUTHU, UserRole.DOCGIA])
+    def ho_so_ca_nhan():
+        thong_ke = dao.get_thong_tin_ho_so(current_user.id)
+        return render_template('ho_so.html', thong_ke=thong_ke)
 
     @app.route('/api/sach', methods=['GET'])
     def api_tim_kiem_sach():
@@ -152,10 +165,6 @@ def register_routes(app):
                     next_page = request.args.get('next')
                     if next_page:
                         return redirect(next_page)
-                    if user.role == UserRole.ADMIN:
-                        return redirect(url_for('quan_ly_sach'))
-                    elif user.role == UserRole.THUTHU:
-                        return redirect('/thuthu')
                     return redirect('/')
 
         return render_template('login.html', error=error_msg, dinh_danh_val=dinh_danh_val)
@@ -611,7 +620,7 @@ def register_routes(app):
         if not current_user.is_authenticated:
             return redirect(url_for('login_process'))
 
-        if current_user.role != UserRole.THUTHU:
+        if current_user.role not in [UserRole.THUTHU, UserRole.ADMIN]:
             return abort(403)
 
         danh_sach_cho_duyet = dao.get_phieu_muon_cho_duyet()
@@ -638,7 +647,7 @@ def register_routes(app):
                 "message": "Vui lòng đăng nhập!"
             }), 401
 
-        if current_user.role != UserRole.THUTHU:
+        if current_user.role not in [UserRole.THUTHU, UserRole.ADMIN]:
             return jsonify({
                 "success": False,
                 "message": "Bạn không có quyền!"
@@ -659,7 +668,7 @@ def register_routes(app):
                 "message": "Vui lòng đăng nhập!"
             }), 401
 
-        if current_user.role != UserRole.THUTHU:
+        if current_user.role not in [UserRole.THUTHU, UserRole.ADMIN]:
             return jsonify({
                 "success": False,
                 "message": "Bạn không có quyền!"
@@ -680,7 +689,7 @@ def register_routes(app):
                 "message": "Vui lòng đăng nhập!"
             }), 401
 
-        if current_user.role != UserRole.THUTHU:
+        if current_user.role not in [UserRole.THUTHU, UserRole.ADMIN]:
             return jsonify({
                 "success": False,
                 "message": "Bạn không có quyền!"
@@ -701,7 +710,7 @@ def register_routes(app):
                 "message": "Vui lòng đăng nhập!"
             }), 401
 
-        if current_user.role != UserRole.THUTHU:
+        if current_user.role not in [UserRole.THUTHU, UserRole.ADMIN]:
             return jsonify({
                 "success": False,
                 "message": "Bạn không có quyền!"
@@ -712,6 +721,15 @@ def register_routes(app):
         return jsonify({
             "success": success,
             "message": message
+        }), 200 if success else 400
+
+    @app.route('/api/thuthu/phieu-muon/<int:phieu_id>/huy', methods=['POST'])
+    @role_required([UserRole.THUTHU, UserRole.ADMIN])
+    def api_huy_phieu_qua_han(phieu_id):
+        success, message = dao.huy_phieu_qua_han(phieu_id)
+        return jsonify({
+            'success': success,
+            'message': message
         }), 200 if success else 400
 
     @app.route('/sach-dang-muon')
@@ -757,7 +775,7 @@ def register_routes(app):
         }), 200 if success else 400
 
     @app.route('/admin/sach')
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def quan_ly_sach():
 
         danh_sach_sach = dao.get_all_sach()
@@ -768,7 +786,7 @@ def register_routes(app):
         )
 
     @app.route('/admin/sach/them', methods=['GET', 'POST'])
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def them_sach():
 
         danh_sach_theloai = dao.get_list_theloai()
@@ -886,7 +904,7 @@ def register_routes(app):
         '/admin/sach/<int:sach_id>/sua',
         methods=['GET', 'POST']
     )
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def sua_sach(sach_id):
 
         sach = dao.get_sach_by_id(sach_id)
@@ -1032,7 +1050,7 @@ def register_routes(app):
         '/admin/sach/<int:sach_id>/xoa',
         methods=['POST']
     )
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def xoa_sach(sach_id):
 
         success, message = dao.xoa_sach(sach_id)
@@ -1096,7 +1114,7 @@ def register_routes(app):
         )
 
     @app.route('/admin/sach/import', methods=['GET', 'POST'])
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def import_sach_excel():
 
         if request.method == 'POST':
@@ -1120,7 +1138,14 @@ def register_routes(app):
 
                 danh_sach_sach = []
 
-                # Bỏ dòng tiêu đề
+                # Đọc tiêu đề để hỗ trợ cả file mới (ten_the_loai)
+                # và file cũ (theloai_id). Database vẫn lưu Sach.theloai_id.
+                headers = [
+                    str(cell.value).strip().lower() if cell.value is not None else ''
+                    for cell in ws[1]
+                ]
+                idx_theloai = headers.index('ten_the_loai') if 'ten_the_loai' in headers else (headers.index('theloai_id') if 'theloai_id' in headers else 6)
+
                 for row in ws.iter_rows(min_row=2, values_only=True):
 
                     if not row[0]:
@@ -1148,11 +1173,15 @@ def register_routes(app):
                             so_trang = None
 
                     theloai_id = None
-                    if row[6]:
-                        try:
-                            theloai_id = int(row[6])
-                        except:
-                            theloai_id = None
+                    ten_the_loai = None
+                    if len(row) > idx_theloai and row[idx_theloai]:
+                        if headers[idx_theloai] == 'ten_the_loai':
+                            ten_the_loai = str(row[idx_theloai]).strip()
+                        else:
+                            try:
+                                theloai_id = int(row[idx_theloai])
+                            except:
+                                theloai_id = None
 
                     so_luong = 0
                     if row[7]:
@@ -1175,6 +1204,7 @@ def register_routes(app):
                         "ngon_ngu": ngon_ngu,
                         "so_trang": so_trang,
                         "theloai_id": theloai_id,
+                        "ten_the_loai": ten_the_loai,
                         "so_luong": so_luong,
                         "anh_bia": anh_bia,
                         "mo_ta": mo_ta
@@ -1205,7 +1235,7 @@ def register_routes(app):
         return render_template('import_sach.html')
 
     @app.route('/admin/the-loai')
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def quan_ly_the_loai():
         danh_sach_the_loai = dao.get_all_theloai()
 
@@ -1215,7 +1245,7 @@ def register_routes(app):
         )
 
     @app.route('/admin/the-loai/them', methods=['GET', 'POST'])
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def them_the_loai():
         if request.method == 'POST':
             ten_the_loai = request.form.get('ten_the_loai', '').strip()
@@ -1237,7 +1267,7 @@ def register_routes(app):
         return render_template('them_the_loai.html')
 
     @app.route('/admin/the-loai/<int:theloai_id>/sua', methods=['GET', 'POST'])
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def sua_the_loai(theloai_id):
         the_loai = TheLoai.query.get(theloai_id)
 
@@ -1269,7 +1299,7 @@ def register_routes(app):
         )
 
     @app.route('/admin/the-loai/<int:theloai_id>/xoa', methods=['POST'])
-    @role_required(UserRole.ADMIN)
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def xoa_the_loai(theloai_id):
         success, message = dao.xoa_theloai(theloai_id)
 
@@ -1302,7 +1332,7 @@ def register_routes(app):
         if not current_user.is_authenticated:
             return redirect(url_for('login_process'))
 
-        if current_user.role != UserRole.THUTHU:
+        if current_user.role not in [UserRole.THUTHU, UserRole.ADMIN]:
             abort(403)
 
         danh_sach_du_doan = dao.du_doan_nhu_cau_muon_sach()

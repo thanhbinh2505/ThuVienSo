@@ -392,6 +392,10 @@
                             Hạn trả
                         </th>
 
+                        <th class="text-right px-6 py-4 font-semibold text-slate-600">
+                            Thao tác
+                        </th>
+
                     </tr>
 
                 </thead>
@@ -445,6 +449,16 @@
 
                             </td>
 
+                            <td class="px-6 py-4 text-right">
+                                {% if phieu.hanTra and phieu.hanTra < now %}
+                                <button type="button" onclick="huyPhieuQuaHan({{ phieu.id }})" class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+                                    Hủy yêu cầu
+                                </button>
+                                {% else %}
+                                <span class="text-xs text-slate-400">Đang mượn</span>
+                                {% endif %}
+                            </td>
+
                         </tr>
 
                         {% endfor %}
@@ -454,7 +468,7 @@
                     <tr>
 
                         <td
-                            colspan="4"
+                            colspan="5"
                             class="text-center py-10 text-slate-400"
                         >
                             Chưa có sách đang được mượn.
@@ -549,6 +563,12 @@ function tuChoiMuon(id) {
         `borrow-row-${id}`
     );
 
+}
+
+
+function huyPhieuQuaHan(id) {
+    if (!confirm('Bạn có chắc muốn hủy yêu cầu mượn quá hạn nhận sách?')) return;
+    xuLyPhieu(`/api/thuthu/phieu-muon/${id}/huy`, `borrow-row-${id}`);
 }
 
 

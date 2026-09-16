@@ -249,78 +249,48 @@ class YeuThich(db.Model):
 
 if __name__ == '__main__':
     with app.app_context():
-        db.drop_all()
         db.create_all()
 
-        import random
-
-        print("Đang tạo dữ liệu mẫu cho Thư Viện Số...")
-        ten_the_loai_list = [
-            "Văn học", "Kỹ năng sống", "Khoa học", "Kinh tế",
-            "Thiếu nhi", "Lịch sử", "Trinh thám", "Công nghệ thông tin"
+        the_loai_data = [
+            ("Văn học", "Tiểu thuyết và các tác phẩm văn học nổi tiếng trong và ngoài nước."),
+            ("Kỹ năng sống", "Sách phát triển bản thân, thói quen và kỹ năng trong cuộc sống."),
+            ("Khoa học", "Sách về khoa học tự nhiên, vũ trụ, sinh học và y học."),
+            ("Kinh tế", "Sách về kinh tế, tài chính, đầu tư và quản trị."),
+            ("Thiếu nhi", "Sách và truyện dành cho trẻ em và thanh thiếu niên."),
+            ("Lịch sử", "Sách nghiên cứu lịch sử, văn minh và các sự kiện thế giới."),
+            ("Trinh thám", "Tiểu thuyết trinh thám, bí ẩn và điều tra tội phạm."),
+            ("Công nghệ thông tin", "Sách về lập trình, thuật toán và kỹ thuật phần mềm")
         ]
-        danh_sach_theloai = []
-        for ten in ten_the_loai_list:
-            tl = TheLoai(tenTheLoai=ten)
-            db.session.add(tl)
-            danh_sach_theloai.append(tl)
-        db.session.flush()
 
-        admin = User(username="admin", hoTen="Quản trị viên", email="admin@thuvienso.vn",
-                     gioiTinh=True, role=UserRole.ADMIN)
+        for ten, mo_ta in the_loai_data:
+            tl = TheLoai(tenTheLoai=ten, moTa=mo_ta)
+            db.session.add(tl)
+
+        # 2. Tạo 3 tài khoản mẫu (Admin, Thủ thư, Độc giả)
+        admin = User(
+            username="admin",
+            hoTen="Quản trị viên",
+            email="admin@thuvienso.vn",
+            gioiTinh=True,
+            role=UserRole.ADMIN
+        )
         admin.set_password("Admin@123")
         db.session.add(admin)
 
-        thuthu = User(username="thuthu", hoTen="Thủ thư Minh Anh", email="thuthu@thuvienso.vn",
-                      soDienThoai="0900000001", gioiTinh=False, role=UserRole.THUTHU)
+        thuthu = User(
+            username="thuthu",
+            hoTen="Thủ thư Minh Anh",
+            email="thuthu@thuvienso.vn",
+            soDienThoai="0900000001",
+            gioiTinh=False,
+            role=UserRole.THUTHU
+        )
         thuthu.set_password("ThuThu@123")
         db.session.add(thuthu)
 
-        for i in range(1, 6):
-            dg = User(username=f"docgia_{i}", hoTen=f"Độc Giả {i}",
-                      email=f"docgia{i}@gmail.com", soDienThoai=f"09010000{i}",
-                      gioiTinh=random.choice([True, False]), role=UserRole.DOCGIA)
-            dg.set_password("123456Aa@")
-            db.session.add(dg)
-
-        db.session.flush()
-        sach_mau = [
-            ("Nhà Giả Kim", "Paulo Coelho", "Văn học"),
-            ("Đắc Nhân Tâm", "Dale Carnegie", "Kỹ năng sống"),
-            ("Tuổi Trẻ Đáng Giá Bao Nhiêu", "Rosie Nguyễn", "Kỹ năng sống"),
-            ("Lược Sử Thời Gian", "Stephen Hawking", "Khoa học"),
-            ("Sapiens: Lược Sử Loài Người", "Yuval Noah Harari", "Lịch sử"),
-            ("Cha Giàu Cha Nghèo", "Robert Kiyosaki", "Kinh tế"),
-            ("Doraemon - Tập 1", "Fujiko F. Fujio", "Thiếu nhi"),
-            ("Sherlock Holmes Toàn Tập", "Arthur Conan Doyle", "Trinh thám"),
-            ("Clean Code", "Robert C. Martin", "Công nghệ thông tin"),
-            ("Dế Mèn Phiêu Lưu Ký", "Tô Hoài", "Văn học"),
-            ("Nhà Kinh Tế Học Tài Ba", "Adam Smith", "Kinh tế"),
-            ("Trí Tuệ Nhân Tạo", "Stuart Russell", "Công nghệ thông tin"),
-        ]
-
-        theloai_map = {tl.tenTheLoai: tl.id for tl in danh_sach_theloai}
-
-        for ten_sach, tac_gia, ten_tl in sach_mau:
-            so_luong = random.randint(3, 15)
-            sach = Sach(
-                tenSach=ten_sach,
-                tacGia=tac_gia,
-                nhaXuatBan=random.choice(["NXB Trẻ", "NXB Kim Đồng", "NXB Lao Động", "NXB Tổng Hợp TPHCM"]),
-                namXuatBan=random.randint(1995, 2024),
-                soTrang=random.randint(150, 500),
-                moTa=f"'{ten_sach}' là một tác phẩm nổi bật của {tac_gia}, "
-                     f"mang đến cho độc giả nhiều góc nhìn sâu sắc và giá trị.",
-                theloai_id=theloai_map.get(ten_tl),
-                soLuong=so_luong,
-                soLuongConLai=random.randint(0, so_luong),
-                diemDanhGiaTB=round(random.uniform(3.0, 5.0), 1)
-            )
-            db.session.add(sach)
-
         try:
             db.session.commit()
-            print("Đã tạo dữ liệu mẫu thành công!")
+            print("Khởi tạo dữ liệu thành công!")
         except Exception as e:
             db.session.rollback()
             print(f"Có lỗi xảy ra: {e}")

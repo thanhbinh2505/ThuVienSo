@@ -863,25 +863,34 @@ def xoa_user(user_id):
         return False, "Có lỗi xảy ra khi xóa người dùng!"
 
 def import_sach_tu_excel(danh_sach_sach):
-    """
-    danh_sach_sach là list các dictionary:
-    {
-        "ten_sach": "...",
-        "tac_gia": "...",
-        "nha_xuat_ban": "...",
-        "nam_xuat_ban": 2025,
-        "ngon_ngu": "Tiếng Việt",
-        "so_trang": 200,
-        "theloai_id": 1,
-        "so_luong": 10,
-        "anh_bia": "...",
-        "mo_ta": "..."
-    }
-    """
     try:
         so_luong_them = 0
+        loi_the_loai = []
 
-        for item in danh_sach_sach:
+        for index, item in enumerate(danh_sach_sach, start=2):
+            theloai_id = item.get("theloai_id")
+            ten_the_loai = (item.get("ten_the_loai") or "").strip()
+
+            # Ưu tiên tên thể loại nếu Excel có cột ten_the_loai.
+            # Nếu file cũ chỉ có ID, chỉ chấp nhận ID thực sự tồn tại trong DB.
+            if ten_the_loai:
+                the_loai = TheLoai.query.filter(
+                    TheLoai.tenTheLoai.ilike(ten_the_loai)
+                ).first()
+                if not the_loai:
+                    loi_the_loai.append(f"Dòng {index}: thể loại '{ten_the_loai}' không tồn tại")
+                    continue
+                theloai_id = the_loai.id
+            elif theloai_id is not None:
+                try:
+                    theloai_id = int(theloai_id)
+                except (TypeError, ValueError):
+                    loi_the_loai.append(f"Dòng {index}: ID thể loại không hợp lệ")
+                    continue
+                if not TheLoai.query.get(theloai_id):
+                    loi_the_loai.append(f"Dòng {index}: ID thể loại {theloai_id} không tồn tại")
+                    continue
+
             sach = Sach(
                 tenSach=item.get("ten_sach"),
                 tacGia=item.get("tac_gia"),
@@ -889,24 +898,53 @@ def import_sach_tu_excel(danh_sach_sach):
                 namXuatBan=item.get("nam_xuat_ban"),
                 ngonNgu=item.get("ngon_ngu") or "Tiếng Việt",
                 soTrang=item.get("so_trang"),
-                theloai_id=item.get("theloai_id"),
+                theloai_id=theloai_id,
                 soLuong=item.get("so_luong") or 0,
                 soLuongConLai=item.get("so_luong") or 0,
                 anhBia=item.get("anh_bia"),
                 moTa=item.get("mo_ta")
             )
-
             db.session.add(sach)
             so_luong_them += 1
 
-        db.session.commit()
+        if loi_the_loai:
+            db.session.rollback()
+            return False, "; ".join(loi_the_loai[:5])
 
+        db.session.commit()
         return True, f"Đã import {so_luong_them} sách thành công!"
 
     except Exception as e:
         db.session.rollback()
         print("LỖI IMPORT EXCEL:", repr(e))
         return False, "Import Excel thất bại!"
+
+def get_lich_su_muon_cua_doc_gia(user_id):
+    return PhieuMuon.query.filter_by(
+        user_id=user_id
+    ).order_by(
+        PhieuMuon.ngayDangKy.desc()
+    ).all()
+
+
+def get_thong_tin_ho_so(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return {}
+
+    return {
+        "user": user,
+        "tong_phieu_muon": PhieuMuon.query.filter_by(user_id=user_id).count(),
+        "dang_muon": PhieuMuon.query.filter(
+            PhieuMuon.user_id == user_id,
+            PhieuMuon.trangThai.in_([TrangThaiMuon.DA_DUYET, TrangThaiMuon.CHO_GIA_HAN])
+        ).count(),
+        "da_tra": PhieuMuon.query.filter_by(
+            user_id=user_id, trangThai=TrangThaiMuon.DA_TRA
+        ).count(),
+        "yeu_thich": YeuThich.query.filter_by(user_id=user_id).count(),
+    }
+
 
 def get_all_theloai():
     return TheLoai.query.order_by(TheLoai.id.desc()).all()

@@ -1,0 +1,73 @@
+{% extends 'layout/base.html' %}
+{% block title %}Hồ sơ cá nhân{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+    <div class="mb-8">
+        <p class="text-sm font-semibold text-primary">TÀI KHOẢN</p>
+        <h1 class="text-3xl font-extrabold text-slate-900 mt-1">Hồ sơ cá nhân</h1>
+        <p class="text-slate-500 mt-2">Thông tin tài khoản và các chức năng dành cho vai trò của bạn.</p>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6">
+            <div class="flex items-center gap-4 mb-6">
+                <img src="{{ current_user.avatar or 'https://ui-avatars.com/api/?name=' + (current_user.hoTen | urlencode) + '&background=eef2ff&color=4f46e5&size=160' }}" class="w-20 h-20 rounded-2xl object-cover border" alt="avatar">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">{{ current_user.hoTen }}</h2>
+                    {% if current_user.role.name == 'ADMIN' %}<span class="text-xs font-bold text-violet-700">Quản trị viên</span>
+                    {% elif current_user.role.name == 'THUTHU' %}<span class="text-xs font-bold text-emerald-700">Thủ thư</span>
+                    {% else %}<span class="text-xs font-bold text-blue-700">Độc giả</span>{% endif %}
+                </div>
+            </div>
+            <dl class="space-y-4 text-sm">
+                <div><dt class="text-slate-400">Tên đăng nhập</dt><dd class="font-semibold mt-1">{{ current_user.username or '—' }}</dd></div>
+                <div><dt class="text-slate-400">Email</dt><dd class="font-semibold mt-1 break-all">{{ current_user.email or '—' }}</dd></div>
+                <div><dt class="text-slate-400">Số điện thoại</dt><dd class="font-semibold mt-1">{{ current_user.soDienThoai or '—' }}</dd></div>
+                <div><dt class="text-slate-400">Ngày sinh</dt><dd class="font-semibold mt-1">{{ current_user.ngaySinh.strftime('%d/%m/%Y') if current_user.ngaySinh else '—' }}</dd></div>
+                <div><dt class="text-slate-400">Ngày tạo tài khoản</dt><dd class="font-semibold mt-1">{{ current_user.ngayTao.strftime('%d/%m/%Y') if current_user.ngayTao else '—' }}</dd></div>
+            </dl>
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+            <div class="grid sm:grid-cols-3 gap-4">
+                <div class="bg-white rounded-2xl border p-5"><p class="text-sm text-slate-500">Tổng phiếu mượn</p><p class="text-3xl font-extrabold mt-2">{{ thong_ke.tong_phieu_muon }}</p></div>
+                <div class="bg-white rounded-2xl border p-5"><p class="text-sm text-slate-500">Đang mượn</p><p class="text-3xl font-extrabold text-emerald-600 mt-2">{{ thong_ke.dang_muon }}</p></div>
+                <div class="bg-white rounded-2xl border p-5"><p class="text-sm text-slate-500">Sách yêu thích</p><p class="text-3xl font-extrabold text-rose-500 mt-2">{{ thong_ke.yeu_thich }}</p></div>
+            </div>
+
+            {% if current_user.role.name == 'DOCGIA' %}
+            <div class="bg-white rounded-2xl border p-6">
+                <h2 class="text-xl font-bold">Chức năng độc giả</h2>
+                <div class="grid sm:grid-cols-2 gap-3 mt-5">
+                    <a href="{{ url_for('sach_dang_muon') }}" class="role-card">📚 <span>Lịch sử mượn sách</span></a>
+                    <a href="{{ url_for('danh_sach_yeu_thich') }}" class="role-card">❤️ <span>Sách yêu thích</span></a>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-white rounded-2xl border p-6">
+                <h2 class="text-xl font-bold">Nghiệp vụ thư viện</h2>
+                <div class="grid sm:grid-cols-2 gap-3 mt-5">
+                    <a href="{{ url_for('trang_thu_thu') }}" class="role-card">✅ <span>Duyệt / hủy yêu cầu</span></a>
+                    <a href="{{ url_for('quan_ly_sach') }}" class="role-card">📚 <span>Quản lý sách</span></a>
+                    <a href="{{ url_for('them_sach') }}" class="role-card">➕ <span>Thêm sách</span></a>
+                    <a href="{{ url_for('import_sach_excel') }}" class="role-card">📥 <span>Nhập sách từ Excel</span></a>
+                    <a href="{{ url_for('quan_ly_the_loai') }}" class="role-card">🏷️ <span>Quản lý thể loại</span></a>
+                    <a href="{{ url_for('them_the_loai') }}" class="role-card">➕ <span>Thêm thể loại</span></a>
+                    <a href="{{ url_for('du_doan_nhu_cau') }}" class="role-card">📈 <span>Dự đoán nhu cầu</span></a>
+                </div>
+            </div>
+            {% if current_user.role.name == 'ADMIN' %}
+            <div class="bg-violet-50 border border-violet-100 rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-violet-900">Chức năng quản trị Admin</h2>
+                <p class="text-sm text-violet-700 mt-1">Các quyền quản trị riêng ngoài nghiệp vụ thư viện.</p>
+                <div class="mt-5"><a href="{{ url_for('quan_ly_nguoi_dung') }}" class="inline-flex items-center gap-2 px-5 py-3 bg-violet-600 text-white rounded-xl font-semibold hover:bg-violet-700">👥 Quản lý người dùng</a></div>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+<style>
+.role-card{display:flex;align-items:center;gap:.75rem;padding:1rem;border:1px solid #e2e8f0;border-radius:1rem;font-weight:600;color:#334155;transition:.2s}.role-card:hover{border-color:#a5b4fc;background:#eef2ff;color:#4f46e5}
+</style>
+{% endblock %}

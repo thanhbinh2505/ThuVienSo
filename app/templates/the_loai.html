@@ -1,0 +1,25 @@
+{% extends 'layout/base.html' %}
+{% block title %}Thể loại sách{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+    <div class="mb-8">
+        <p class="text-sm font-semibold text-primary">KHÁM PHÁ</p>
+        <h1 class="text-3xl font-extrabold text-slate-900 mt-1">Tất cả thể loại</h1>
+        <p class="text-slate-500 mt-2">Danh sách toàn bộ thể loại hiện có trong thư viện.</p>
+    </div>
+    {% if ds_the_loai %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {% for the_loai in ds_the_loai %}
+        <a href="{{ url_for('index') }}?theloai_id={{ the_loai.id }}#tim-kiem" class="group bg-white border border-slate-200 rounded-2xl p-6 hover:border-indigo-200 hover:shadow-soft transition">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-primary flex items-center justify-center text-2xl mb-4">📚</div>
+            <h2 class="font-bold text-lg text-slate-900 group-hover:text-primary">{{ the_loai.tenTheLoai }}</h2>
+            {% if the_loai.moTa %}<p class="text-sm text-slate-500 mt-2 line-clamp-2">{{ the_loai.moTa }}</p>{% endif %}
+            <span class="inline-flex mt-4 text-sm font-semibold text-primary">Xem sách →</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white border rounded-2xl p-12 text-center text-slate-500">Thư viện chưa có thể loại nào.</div>
+    {% endif %}
+</div>
+{% endblock %}
