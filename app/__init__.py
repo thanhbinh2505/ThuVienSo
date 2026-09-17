@@ -14,12 +14,10 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "k8HDLZbie2T8UWvC70S7f-SukGY")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL",
-    "mysql+pymysql://root:1234@localhost/thuviensodb?charset=utf8mb4"
+    "mysql+pymysql://root:Admin%40123@localhost/thuviensodb?charset=utf8mb4"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-# =========================
-# CẤU HÌNH GỬI EMAIL OTP
-# =========================
+
 
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
