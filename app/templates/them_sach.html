@@ -3,395 +3,84 @@
 {% block title %}Thêm sách{% endblock %}
 
 {% block content %}
-
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-
-    <!-- TIÊU ĐỀ -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-
         <div>
-            <h1 class="text-3xl font-extrabold text-slate-900">
-                ➕ Thêm sách mới
-            </h1>
-
-            <p class="text-slate-500 mt-2">
-                Nhập thông tin sách để thêm vào thư viện
-            </p>
+            <h1 class="text-3xl font-extrabold text-slate-900">➕ Thêm sách mới</h1>
+            <p class="text-slate-500 mt-2">Nhập thông tin sách để thêm vào thư viện</p>
         </div>
-
-        <!-- QUAY LẠI -->
-        <a
-            href="{{ url_for('quan_ly_sach') }}"
-            class="inline-flex items-center gap-2 px-4 py-2.5
-                   border border-gray-200
-                   text-slate-600
-                   rounded-xl
-                   hover:border-primary
-                   hover:text-primary
-                   transition"
-        >
+        <a href="{{ url_for('quan_ly_sach') }}" class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 text-slate-600 rounded-xl hover:border-primary hover:text-primary transition">
             ← Quay lại
         </a>
-
     </div>
-
-
-    <!-- THÔNG BÁO LỖI -->
     {% if error %}
-
-    <div class="mb-6 px-4 py-3 rounded-xl
-                bg-red-50 border border-red-200
-                text-red-600">
-
+    <div class="mb-6 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600">
         {{ error }}
-
     </div>
-
     {% endif %}
-
-
-    <!-- FORM -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-soft overflow-hidden">
-
         <div class="px-6 py-5 border-b border-gray-100">
-
-            <h2 class="text-xl font-bold text-slate-800">
-                Thông tin sách
-            </h2>
-
-            <p class="text-sm text-slate-500 mt-1">
-                Các trường có dấu
-                <span class="text-red-500">*</span>
-                là bắt buộc.
-            </p>
-
+            <h2 class="text-xl font-bold text-slate-800">Thông tin sách</h2>
+            <p class="text-sm text-slate-500 mt-1">Các trường có dấu <span class="text-red-500">*</span> là bắt buộc.</p>
         </div>
-
-
         <form method="POST" class="p-6" enctype="multipart/form-data">
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-
-                <!-- TÊN SÁCH -->
                 <div>
-
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Tên sách
-                        <span class="text-red-500">*</span>
-                    </label>
-
-                    <input
-                        type="text"
-                        name="ten_sach"
-                        required
-                        placeholder="Nhập tên sách"
-                        value="{{ request.form.get('ten_sach', '') }}"
-                        class="w-full px-4 py-3
-                               border border-gray-200
-                               rounded-xl
-                               text-slate-800
-                               placeholder-slate-400
-                               focus:outline-none
-                               focus:ring-2 focus:ring-primary/20
-                               focus:border-primary
-                               transition"
-                    >
-
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Tên sách <span class="text-red-500">*</span></label>
+                    <input type="text" name="ten_sach" required placeholder="Nhập tên sách" value="{{ request.form.get('ten_sach', '') }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">
                 </div>
-
-
-                <!-- TÁC GIẢ -->
                 <div>
-
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Tác giả
-                        <span class="text-red-500">*</span>
-                    </label>
-
-                    <input
-                        type="text"
-                        name="tac_gia"
-                        required
-                        placeholder="Nhập tên tác giả"
-                        value="{{ request.form.get('tac_gia', '') }}"
-                        class="w-full px-4 py-3
-                               border border-gray-200
-                               rounded-xl
-                               text-slate-800
-                               placeholder-slate-400
-                               focus:outline-none
-                               focus:ring-2 focus:ring-primary/20
-                               focus:border-primary
-                               transition"
-                    >
-
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Tác giả <span class="text-red-500">*</span></label>
+                    <input type="text" name="tac_gia" required placeholder="Nhập tên tác giả" value="{{ request.form.get('tac_gia', '') }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">
                 </div>
-
-
-                <!-- NHÀ XUẤT BẢN -->
                 <div>
-
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Nhà xuất bản
-                    </label>
-
-                    <input
-                        type="text"
-                        name="nha_xuat_ban"
-                        placeholder="Ví dụ: NXB Trẻ"
-                        value="{{ request.form.get('nha_xuat_ban', '') }}"
-                        class="w-full px-4 py-3
-                               border border-gray-200
-                               rounded-xl
-                               text-slate-800
-                               placeholder-slate-400
-                               focus:outline-none
-                               focus:ring-2 focus:ring-primary/20
-                               focus:border-primary
-                               transition"
-                    >
-
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Nhà xuất bản</label>
+                    <input type="text" name="nha_xuat_ban" placeholder="Ví dụ: NXB Trẻ" value="{{ request.form.get('nha_xuat_ban', '') }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">
                 </div>
-
-
-                <!-- NĂM XUẤT BẢN -->
                 <div>
-
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Năm xuất bản
-                    </label>
-
-                    <input
-                        type="number"
-                        name="nam_xuat_ban"
-                        min="1000"
-                        max="2100"
-                        placeholder="Ví dụ: 2024"
-                        value="{{ request.form.get('nam_xuat_ban', '') }}"
-                        class="w-full px-4 py-3
-                               border border-gray-200
-                               rounded-xl
-                               text-slate-800
-                               placeholder-slate-400
-                               focus:outline-none
-                               focus:ring-2 focus:ring-primary/20
-                               focus:border-primary
-                               transition"
-                    >
-
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Năm xuất bản</label>
+                    <input type="number" name="nam_xuat_ban" min="1000" max="2100" placeholder="Ví dụ: 2024" value="{{ request.form.get('nam_xuat_ban', '') }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">
                 </div>
-
-
-                <!-- NGÔN NGỮ -->
                 <div>
-
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Ngôn ngữ
-                    </label>
-
-                    <input
-                        type="text"
-                        name="ngon_ngu"
-                        value="{{ request.form.get('ngon_ngu', 'Tiếng Việt') }}"
-                        placeholder="Ví dụ: Tiếng Việt"
-                        class="w-full px-4 py-3
-                               border border-gray-200
-                               rounded-xl
-                               text-slate-800
-                               placeholder-slate-400
-                               focus:outline-none
-                               focus:ring-2 focus:ring-primary/20
-                               focus:border-primary
-                               transition"
-                    >
-
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Ngôn ngữ</label>
+                    <input type="text" name="ngon_ngu" value="{{ request.form.get('ngon_ngu', 'Tiếng Việt') }}" placeholder="Ví dụ: Tiếng Việt" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">
                 </div>
-
-
-                <!-- SỐ TRANG -->
                 <div>
-
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Số trang
-                    </label>
-
-                    <input
-                        type="number"
-                        name="so_trang"
-                        min="1"
-                        placeholder="Ví dụ: 300"
-                        value="{{ request.form.get('so_trang', '') }}"
-                        class="w-full px-4 py-3
-                               border border-gray-200
-                               rounded-xl
-                               text-slate-800
-                               placeholder-slate-400
-                               focus:outline-none
-                               focus:ring-2 focus:ring-primary/20
-                               focus:border-primary
-                               transition"
-                    >
-
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Số trang</label>
+                    <input type="number" name="so_trang" min="1" placeholder="Ví dụ: 300" value="{{ request.form.get('so_trang', '') }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">
                 </div>
-
-<!-- THỂ LOẠI -->
-<div>
-
-    <label class="block text-sm font-semibold text-slate-700 mb-2">
-        Thể loại
-    </label>
-
-    <select
-        name="theloai_id"
-        class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 bg-white"
-    >
-
-        <option value="">
-            -- Chọn thể loại --
-        </option>
-
-        {% for theloai in danh_sach_theloai %}
-
-            <option value="{{ theloai.id }}">
-                {{ theloai.tenTheLoai }}
-            </option>
-
-        {% endfor %}
-
-    </select>
-
-</div>
-
-
-                <!-- SỐ LƯỢNG -->
                 <div>
-
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Số lượng
-                        <span class="text-red-500">*</span>
-                    </label>
-
-                    <input
-                        type="number"
-                        name="so_luong"
-                        min="0"
-                        required
-                        value="{{ request.form.get('so_luong', '1') }}"
-                        class="w-full px-4 py-3
-                               border border-gray-200
-                               rounded-xl
-                               text-slate-800
-                               focus:outline-none
-                               focus:ring-2 focus:ring-primary/20
-                               focus:border-primary
-                               transition"
-                    >
-
-                    <p class="text-xs text-slate-400 mt-2">
-                        Số lượng ban đầu sẽ được tính là số sách còn lại.
-                    </p>
-
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Thể loại</label>
+                    <select name="theloai_id" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 bg-white">
+                        <option value="">-- Chọn thể loại --</option>
+                        {% for theloai in danh_sach_theloai %}
+                        <option value="{{ theloai.id }}">{{ theloai.tenTheLoai }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-
-
-
-                       <!-- ẢNH BÌA -->
-<div>
-    <label class="block text-sm font-semibold text-slate-700 mb-2">
-        Ảnh bìa sách
-    </label>
-
-    <input
-        type="file"
-        name="anh_bia"
-        accept="image/*"
-        class="w-full px-4 py-3 border border-gray-200 rounded-xl"
-    >
-</div>
-
-                <!-- DÁN LINK ẢNH -->
-<div>
-    <label class="block text-sm font-semibold text-slate-700 mb-2">
-        Hoặc dán link ảnh
-    </label>
-
-    <input
-        type="text"
-        name="anh_bia_url"
-        placeholder="Dán link ảnh từ Internet..."
-        class="w-full px-4 py-3 border border-gray-200 rounded-xl"
-    >
-</div>
-
-
-                <!-- MÔ TẢ -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Số lượng <span class="text-red-500">*</span></label>
+                    <input type="number" name="so_luong" min="0" required value="{{ request.form.get('so_luong', '1') }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">
+                    <p class="text-xs text-slate-400 mt-2">Số lượng ban đầu sẽ được tính là số sách còn lại.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Ảnh bìa sách</label>
+                    <input type="file" name="anh_bia" accept="image/*" class="w-full px-4 py-3 border border-gray-200 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Hoặc dán link ảnh</label>
+                    <input type="text" name="anh_bia_url" placeholder="Dán link ảnh từ Internet..." class="w-full px-4 py-3 border border-gray-200 rounded-xl">
+                </div>
                 <div class="md:col-span-2">
-
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Mô tả sách
-                    </label>
-
-                    <textarea
-                        name="mo_ta"
-                        rows="6"
-                        placeholder="Nhập mô tả về nội dung sách..."
-                        class="w-full px-4 py-3
-                               border border-gray-200
-                               rounded-xl
-                               text-slate-800
-                               placeholder-slate-400
-                               resize-none
-                               focus:outline-none
-                               focus:ring-2 focus:ring-primary/20
-                               focus:border-primary
-                               transition"
-                    >{{ request.form.get('mo_ta', '') }}</textarea>
-
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Mô tả sách</label>
+                    <textarea name="mo_ta" rows="6" placeholder="Nhập mô tả về nội dung sách..." class="w-full px-4 py-3 border border-gray-200 rounded-xl text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition">{{ request.form.get('mo_ta', '') }}</textarea>
                 </div>
-
             </div>
-
-
-            <!-- NÚT -->
-            <div class="flex flex-col-reverse sm:flex-row
-                        justify-end gap-3
-                        mt-8 pt-6
-                        border-t border-gray-100">
-
-                <a
-                    href="{{ url_for('quan_ly_sach') }}"
-                    class="inline-flex items-center justify-center
-                           px-5 py-3
-                           rounded-xl
-                           border border-gray-200
-                           text-slate-600
-                           font-semibold
-                           hover:bg-slate-50
-                           transition"
-                >
-                    Hủy
-                </a>
-
-                <button
-                    type="submit"
-                    class="inline-flex items-center justify-center gap-2
-                           px-6 py-3
-                           bg-primary hover:bg-primaryHover
-                           text-white font-semibold
-                           rounded-xl
-                           shadow-btn
-                           transition-all"
-                >
-                    💾 Lưu sách
-                </button>
-
+            <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+                <a href="{{ url_for('quan_ly_sach') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-gray-200 text-slate-600 font-semibold hover:bg-slate-50 transition">Hủy</a>
+                <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primaryHover text-white font-semibold rounded-xl shadow-btn transition-all">💾 Lưu sách</button>
             </div>
-
         </form>
-
     </div>
-
 </div>
-
 {% endblock %}

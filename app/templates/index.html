@@ -5,95 +5,32 @@
 <section class="relative pt-32 pb-16 bg-gradient-to-br from-lightBg via-white to-white overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
        <div class="max-w-3xl mx-auto">
-
-            <!-- CHỌN CHẾ ĐỘ TÌM KIẾM -->
             <div class="flex justify-center gap-3 mb-4">
-
-                <button
-                    id="normalSearch"
-                    type="button"
-                    class="px-4 py-2 rounded-lg bg-primary text-white font-semibold"
-                >
-                    🔍 Tìm kiếm thường
-                </button>
-
-                <button
-                    id="semanticSearch"
-                    type="button"
-                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 font-semibold"
-                >
-                    ✨ Tìm kiếm ngữ nghĩa
-                </button>
-
+                <button id="normalSearch" type="button" class="px-4 py-2 rounded-lg bg-primary text-white font-semibold">🔍 Tìm kiếm thường</button>
+                <button id="semanticSearch" type="button" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 font-semibold">✨ Tìm kiếm ngữ nghĩa</button>
             </div>
-
-
-            <!-- Ô TÌM KIẾM -->
-            <div
-                id="tim-kiem"
-                class="bg-white p-3 rounded-2xl shadow-soft border border-gray-100 flex flex-col sm:flex-row gap-3"
-            >
-
+            <div id="tim-kiem" class="bg-white p-3 rounded-2xl shadow-soft border border-gray-100 flex flex-col sm:flex-row gap-3">
                 <div class="relative flex-1">
-
-                    <i
-                        data-lucide="search"
-                        class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"
-                    ></i>
-
-                    <input
-                        id="searchInput"
-                        type="text"
-                        placeholder="Tìm theo tên sách, tác giả, mô tả..."
-                        class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200"
-                    >
-
+                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+                    <input id="searchInput" type="text" placeholder="Tìm theo tên sách, tác giả, mô tả..." class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200">
                 </div>
-
-
-                <!-- THỂ LOẠI -->
-                <select
-                    id="theloaiSelect"
-                    class="px-4 py-3.5 rounded-xl border border-gray-200 text-sm text-slate-600"
-                >
-
-                    <option value="">
-                        Tất cả thể loại
-                    </option>
-
+                <select id="theloaiSelect" class="px-4 py-3.5 rounded-xl border border-gray-200 text-sm text-slate-600">
+                    <option value="">Tất cả thể loại</option>
                     {% for tl in ds_theloai %}
-
-                    <option value="{{ tl.id }}">
-                        {{ tl.tenTheLoai }}
-                    </option>
-
+                    <option value="{{ tl.id }}">{{ tl.tenTheLoai }}</option>
                     {% endfor %}
-
                 </select>
-
-
-                <!-- NÚT TÌM -->
-                <button
-                    id="btnSearch"
-                    class="bg-primary hover:bg-primaryHover text-white px-6 py-3.5 rounded-xl font-semibold shadow-btn transition-all shrink-0"
-                >
-                    Tìm kiếm
-                </button>
-
+                <button id="btnSearch" class="bg-primary hover:bg-primaryHover text-white px-6 py-3.5 rounded-xl font-semibold shadow-btn transition-all shrink-0">Tìm kiếm</button>
             </div>
-
         </div>
     </div>
 </section>
+
 <section id="the-loai" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 mb-10">
     <div id="theloaiChips" class="flex flex-wrap gap-2 justify-center">
-        <button data-id="" class="chip-theloai active px-4 py-2 rounded-full text-sm font-semibold border border-primary bg-primary text-white transition-all">
-            Tất cả
-        </button>
+        <button data-id="" class="chip-theloai active px-4 py-2 rounded-full text-sm font-semibold border border-primary bg-primary text-white transition-all">Tất cả</button>
         {% for tl in ds_theloai %}
-        <button data-id="{{ tl.id }}" class="chip-theloai px-4 py-2 rounded-full text-sm font-semibold border border-gray-200 text-slate-600 hover:border-primary hover:text-primary transition-all">
-            {{ tl.tenTheLoai }}
-        </button>
+        <button data-id="{{ tl.id }}" class="chip-theloai px-4 py-2 rounded-full text-sm font-semibold border border-gray-200 text-slate-600 hover:border-primary hover:text-primary transition-all">{{ tl.tenTheLoai }}</button>
         {% endfor %}
     </div>
 </section>
@@ -110,153 +47,63 @@
             <option value="danh_gia">Đánh giá cao</option>
         </select>
     </div>
-
     <div id="loadingBooks" class="hidden text-center py-16 text-slate-400">
         <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i> Đang tải sách...
     </div>
-
     <div id="bookGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
         {% for s in ket_qua['items'] %}
         <a href="/sach/{{ s.id }}" class="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
             <div class="aspect-[3/4] overflow-hidden bg-slate-100">
-                <img src="{{ s.anhBia }}" alt="{{ s.tenSach }}"
-                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                     onerror="this.src='/static/image/default.png'">
+                <img src="{{ s.anhBia }}" alt="{{ s.tenSach }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='/static/image/default.png'">
             </div>
             <div class="p-4">
                 <h3 class="font-bold text-slate-900 line-clamp-2 mb-1 group-hover:text-primary transition-colors">{{ s.tenSach }}</h3>
                 <p class="text-sm text-slate-500 mb-2 truncate">{{ s.tacGia }}</p>
                 <div class="flex items-center justify-between text-xs">
-                    <span class="flex items-center gap-1 text-amber-500 font-semibold">
-                        <i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i> {{ s.diemDanhGiaTB }}
-                    </span>
-                    <span class="px-2 py-1 rounded-full font-semibold {% if s.soLuongConLai > 0 %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-500{% endif %}">
-                        {{ 'Còn sách' if s.soLuongConLai > 0 else 'Hết sách' }}
-                    </span>
+                    <span class="flex items-center gap-1 text-amber-500 font-semibold"><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i> {{ s.diemDanhGiaTB }}</span>
+                    <span class="px-2 py-1 rounded-full font-semibold {% if s.soLuongConLai > 0 %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-500{% endif %}">{{ 'Còn sách' if s.soLuongConLai > 0 else 'Hết sách' }}</span>
                 </div>
             </div>
         </a>
         {% endfor %}
     </div>
-
     <div id="emptyState" class="hidden text-center py-16">
         <i data-lucide="book-x" class="w-14 h-14 text-slate-300 mx-auto mb-3"></i>
         <p class="text-slate-500 font-medium">Không tìm thấy sách phù hợp.</p>
     </div>
-
     <div id="pagination" class="flex items-center justify-center gap-2 mt-10"></div>
 </section>
 
 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 
 {% if current_user.is_authenticated and sach_goi_y %}
-
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-
     <div class="flex items-center gap-3 mb-6">
-
         <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
-            <i data-lucide="sparkles"
-               class="w-6 h-6 text-primary">
-            </i>
+            <i data-lucide="sparkles" class="w-6 h-6 text-primary"></i>
         </div>
-
         <div>
-            <h2 class="text-2xl font-bold text-slate-900">
-                Gợi ý dành cho bạn
-            </h2>
-
-            <p class="text-sm text-slate-500">
-                Sách được đề xuất dựa trên lịch sử xem và mượn của bạn
-            </p>
+            <h2 class="text-2xl font-bold text-slate-900">Gợi ý dành cho bạn</h2>
+            <p class="text-sm text-slate-500">Sách được đề xuất dựa trên lịch sử xem và mượn của bạn</p>
         </div>
-
     </div>
-
-
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-
         {% for s in sach_goi_y %}
-
-        <a href="/sach/{{ s.id }}"
-           class="group bg-white rounded-2xl overflow-hidden
-                  border border-gray-100 shadow-sm
-                  hover:shadow-xl transition-all duration-300">
-
+        <a href="/sach/{{ s.id }}" class="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
             <div class="aspect-[3/4] overflow-hidden bg-slate-100">
-
-                <img src="{{ s.anhBia }}"
-                     alt="{{ s.tenSach }}"
-                     class="w-full h-full object-cover
-                            group-hover:scale-105
-                            transition-transform duration-300"
-
-                     onerror="this.src='/static/image/default.png'">
-
+                <img src="{{ s.anhBia }}" alt="{{ s.tenSach }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='/static/image/default.png'">
             </div>
-
-
             <div class="p-4">
-
-                <h3 class="font-bold text-slate-900
-                           line-clamp-2 mb-1
-                           group-hover:text-primary
-                           transition-colors">
-
-                    {{ s.tenSach }}
-
-                </h3>
-
-
-                <p class="text-sm text-slate-500
-                          mb-2 truncate">
-
-                    {{ s.tacGia }}
-
-                </p>
-
-
-                <div class="flex items-center
-                            justify-between text-xs">
-
-                    <span class="flex items-center
-                                 gap-1 text-amber-500
-                                 font-semibold">
-
-                        <i data-lucide="star"
-                           class="w-3.5 h-3.5 fill-current">
-                        </i>
-
-                        {{ s.diemDanhGiaTB }}
-
-                    </span>
-
-
-                    <span class="px-2 py-1 rounded-full
-                                 font-semibold
-                                 {% if s.soLuongConLai > 0 %}
-                                 bg-green-100 text-green-600
-                                 {% else %}
-                                 bg-red-100 text-red-500
-                                 {% endif %}">
-
-                        {{ 'Còn sách'
-                           if s.soLuongConLai > 0
-                           else 'Hết sách' }}
-
-                    </span>
-
+                <h3 class="font-bold text-slate-900 line-clamp-2 mb-1 group-hover:text-primary transition-colors">{{ s.tenSach }}</h3>
+                <p class="text-sm text-slate-500 mb-2 truncate">{{ s.tacGia }}</p>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="flex items-center gap-1 text-amber-500 font-semibold"><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i> {{ s.diemDanhGiaTB }}</span>
+                    <span class="px-2 py-1 rounded-full font-semibold {% if s.soLuongConLai > 0 %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-500{% endif %}">{{ 'Còn sách' if s.soLuongConLai > 0 else 'Hết sách' }}</span>
                 </div>
-
             </div>
-
         </a>
-
         {% endfor %}
-
     </div>
-
 </section>
-
 {% endif %}
 {% endblock %}

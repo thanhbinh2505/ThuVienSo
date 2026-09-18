@@ -35,17 +35,13 @@ def rollback():
 def get_list_theloai():
     return TheLoai.query.order_by(TheLoai.tenTheLoai).all()
 
+
 def tim_kiem_sach(tu_khoa="", theloai_id=None, page=1, page_size=12, sort="moi_nhat"):
     query = Sach.query
-
     if tu_khoa:
         tu_khoa_like = f"%{tu_khoa.strip()}%"
-        query = query.filter(or_(
-            Sach.tenSach.ilike(tu_khoa_like),
-            Sach.tacGia.ilike(tu_khoa_like),
-            Sach.moTa.ilike(tu_khoa_like),
-        ))
-
+        query = query.filter(
+            or_(Sach.tenSach.ilike(tu_khoa_like), Sach.tacGia.ilike(tu_khoa_like), Sach.moTa.ilike(tu_khoa_like)))
     if theloai_id:
         query = query.filter(Sach.theloai_id == theloai_id)
 
@@ -57,14 +53,10 @@ def tim_kiem_sach(tu_khoa="", theloai_id=None, page=1, page_size=12, sort="moi_n
         query = query.order_by(Sach.ngayTao.desc())
 
     total = query.count()
-    ds_sach = query.offset((page - 1) * page_size).limit(page_size).all()
-
     return {
-        "total": total,
-        "page": page,
-        "page_size": page_size,
+        "total": total, "page": page, "page_size": page_size,
         "total_pages": max(1, (total + page_size - 1) // page_size),
-        "items": [s.to_dict() for s in ds_sach],
+        "items": [s.to_dict() for s in query.offset((page - 1) * page_size).limit(page_size).all()]
     }
 
 def get_sach_by_id(sach_id):
@@ -611,42 +603,20 @@ def get_all_sach():
     return Sach.query.order_by(Sach.id.desc()).all()
 
 
-def them_sach(
-        ten_sach,
-        tac_gia,
-        nha_xuat_ban=None,
-        nam_xuat_ban=None,
-        ngon_ngu="Tiếng Việt",
-        so_trang=None,
-        mo_ta=None,
-        anh_bia=None,
-        theloai_id=None,
-        so_luong=0):
-
+def them_sach(ten_sach, tac_gia, nha_xuat_ban=None, nam_xuat_ban=None, ngon_ngu="Tiếng Việt", so_trang=None, mo_ta=None, anh_bia=None, theloai_id=None, so_luong=0):
     try:
         sach = Sach(
-            tenSach=ten_sach,
-            tacGia=tac_gia,
-            nhaXuatBan=nha_xuat_ban,
-            namXuatBan=nam_xuat_ban,
-            ngonNgu=ngon_ngu,
-            soTrang=so_trang,
-            moTa=mo_ta,
-            anhBia=anh_bia,
-            theloai_id=theloai_id,
-            soLuong=so_luong,
-            soLuongConLai=so_luong
+            tenSach=ten_sach, tacGia=tac_gia, nhaXuatBan=nha_xuat_ban,
+            namXuatBan=nam_xuat_ban, ngonNgu=ngon_ngu, soTrang=so_trang,
+            moTa=mo_ta, anhBia=anh_bia, theloai_id=theloai_id,
+            soLuong=so_luong, soLuongConLai=so_luong
         )
-
         db.session.add(sach)
         db.session.commit()
-
         return True, "Thêm sách thành công!", sach
-
     except Exception as e:
         db.session.rollback()
         print("LỖI THÊM SÁCH:", repr(e))
-
         return False, "Có lỗi xảy ra khi thêm sách!", None
 
 
@@ -747,21 +717,10 @@ def get_all_users():
 
 
 def tim_kiem_user(tu_khoa=""):
-
     query = User.query
-
     if tu_khoa:
         tu_khoa = tu_khoa.strip()
-
-        query = query.filter(
-            or_(
-                User.username.ilike(f"%{tu_khoa}%"),
-                User.hoTen.ilike(f"%{tu_khoa}%"),
-                User.email.ilike(f"%{tu_khoa}%"),
-                User.soDienThoai.ilike(f"%{tu_khoa}%")
-            )
-        )
-
+        query = query.filter(or_(User.username.ilike(f"%{tu_khoa}%"), User.hoTen.ilike(f"%{tu_khoa}%"), User.email.ilike(f"%{tu_khoa}%"), User.soDienThoai.ilike(f"%{tu_khoa}%")))
     return query.order_by(User.id.desc()).all()
 
 
@@ -862,21 +821,17 @@ def xoa_user(user_id):
 
         return False, "Có lỗi xảy ra khi xóa người dùng!"
 
+
 def import_sach_tu_excel(danh_sach_sach):
     try:
         so_luong_them = 0
         loi_the_loai = []
-
         for index, item in enumerate(danh_sach_sach, start=2):
             theloai_id = item.get("theloai_id")
             ten_the_loai = (item.get("ten_the_loai") or "").strip()
 
-            # Ưu tiên tên thể loại nếu Excel có cột ten_the_loai.
-            # Nếu file cũ chỉ có ID, chỉ chấp nhận ID thực sự tồn tại trong DB.
             if ten_the_loai:
-                the_loai = TheLoai.query.filter(
-                    TheLoai.tenTheLoai.ilike(ten_the_loai)
-                ).first()
+                the_loai = TheLoai.query.filter(TheLoai.tenTheLoai.ilike(ten_the_loai)).first()
                 if not the_loai:
                     loi_the_loai.append(f"Dòng {index}: thể loại '{ten_the_loai}' không tồn tại")
                     continue
@@ -892,17 +847,11 @@ def import_sach_tu_excel(danh_sach_sach):
                     continue
 
             sach = Sach(
-                tenSach=item.get("ten_sach"),
-                tacGia=item.get("tac_gia"),
-                nhaXuatBan=item.get("nha_xuat_ban"),
-                namXuatBan=item.get("nam_xuat_ban"),
-                ngonNgu=item.get("ngon_ngu") or "Tiếng Việt",
-                soTrang=item.get("so_trang"),
-                theloai_id=theloai_id,
-                soLuong=item.get("so_luong") or 0,
-                soLuongConLai=item.get("so_luong") or 0,
-                anhBia=item.get("anh_bia"),
-                moTa=item.get("mo_ta")
+                tenSach=item.get("ten_sach"), tacGia=item.get("tac_gia"),
+                nhaXuatBan=item.get("nha_xuat_ban"), namXuatBan=item.get("nam_xuat_ban"),
+                ngonNgu=item.get("ngon_ngu") or "Tiếng Việt", soTrang=item.get("so_trang"),
+                theloai_id=theloai_id, soLuong=item.get("so_luong") or 0,
+                soLuongConLai=item.get("so_luong") or 0, anhBia=item.get("anh_bia"), moTa=item.get("mo_ta")
             )
             db.session.add(sach)
             so_luong_them += 1
@@ -913,7 +862,6 @@ def import_sach_tu_excel(danh_sach_sach):
 
         db.session.commit()
         return True, f"Đã import {so_luong_them} sách thành công!"
-
     except Exception as e:
         db.session.rollback()
         print("LỖI IMPORT EXCEL:", repr(e))
