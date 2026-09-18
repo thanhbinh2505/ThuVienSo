@@ -788,117 +788,118 @@ def register_routes(app):
     @app.route('/admin/sach/them', methods=['GET', 'POST'])
     @role_required([UserRole.ADMIN, UserRole.THUTHU])
     def them_sach():
-
         danh_sach_theloai = dao.get_list_theloai()
-
         if request.method == 'POST':
-
             ten_sach = request.form.get('ten_sach', '').strip()
             tac_gia = request.form.get('tac_gia', '').strip()
-
-            nha_xuat_ban = request.form.get(
-                'nha_xuat_ban', ''
-            ).strip()
-
+            nha_xuat_ban = request.form.get('nha_xuat_ban', '').strip()
             nam_xuat_ban = request.form.get('nam_xuat_ban')
-            ngon_ngu = request.form.get(
-                'ngon_ngu', 'Tiếng Việt'
-            )
-
+            ngon_ngu = request.form.get('ngon_ngu', 'Tiếng Việt')
             so_trang = request.form.get('so_trang')
-
             mo_ta = request.form.get('mo_ta', '').strip()
-
             theloai_id = request.form.get('theloai_id')
-
             so_luong = request.form.get('so_luong', 0)
-
             file = request.files.get('anh_bia')
-
             anh_bia_url = request.form.get('anh_bia_url', '').strip()
-
             anh_bia = None
 
             if file and file.filename != '':
                 filename = secure_filename(file.filename)
-
-                file.save(
-                    os.path.join(
-                        app.config['UPLOAD_FOLDER'],
-                        filename
-                    )
-                )
-
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 anh_bia = f'/static/images/sach/{filename}'
-
             elif anh_bia_url:
                 anh_bia = anh_bia_url
 
-            # Kiểm tra dữ liệu bắt buộc
             if not ten_sach or not tac_gia:
-                return render_template(
-                    'them_sach.html',
-                    danh_sach_theloai=danh_sach_theloai,
-                    error="Vui lòng nhập tên sách và tác giả!"
-                )
+                return render_template('them_sach.html', danh_sach_theloai=danh_sach_theloai,
+                                       error="Vui lòng nhập tên sách và tác giả!")
 
             try:
-                nam_xuat_ban = (
-                    int(nam_xuat_ban)
-                    if nam_xuat_ban else None
-                )
-
-                so_trang = (
-                    int(so_trang)
-                    if so_trang else None
-                )
-
-                theloai_id = (
-                    int(theloai_id)
-                    if theloai_id else None
-                )
-
+                nam_xuat_ban = int(nam_xuat_ban) if nam_xuat_ban else None
+                so_trang = int(so_trang) if so_trang else None
+                theloai_id = int(theloai_id) if theloai_id else None
                 so_luong = int(so_luong)
-
                 if so_luong < 0:
                     raise ValueError
-
             except ValueError:
-
-                return render_template(
-                    'them_sach.html',
-                    danh_sach_theloai=danh_sach_theloai,
-                    error="Dữ liệu số không hợp lệ!"
-                )
+                return render_template('them_sach.html', danh_sach_theloai=danh_sach_theloai,
+                                       error="Dữ liệu số không hợp lệ!")
 
             success, message, sach = dao.them_sach(
-                ten_sach=ten_sach,
-                tac_gia=tac_gia,
-                nha_xuat_ban=nha_xuat_ban,
-                nam_xuat_ban=nam_xuat_ban,
-                ngon_ngu=ngon_ngu,
-                so_trang=so_trang,
-                mo_ta=mo_ta,
-                theloai_id=theloai_id,
-                anh_bia=anh_bia,
-                so_luong=so_luong
+                ten_sach=ten_sach, tac_gia=tac_gia, nha_xuat_ban=nha_xuat_ban,
+                nam_xuat_ban=nam_xuat_ban, ngon_ngu=ngon_ngu, so_trang=so_trang,
+                mo_ta=mo_ta, theloai_id=theloai_id, anh_bia=anh_bia, so_luong=so_luong
             )
-
             if success:
-                return redirect(
-                    url_for('quan_ly_sach')
-                )
+                return redirect(url_for('quan_ly_sach'))
+            return render_template('them_sach.html', danh_sach_theloai=danh_sach_theloai, error=message)
+        return render_template('them_sach.html', danh_sach_theloai=danh_sach_theloai)
 
-            return render_template(
-                'them_sach.html',
-                danh_sach_theloai=danh_sach_theloai,
-                error=message
-            )
+    @app.route('/admin/sach/import', methods=['GET', 'POST'])
+    @role_required([UserRole.ADMIN, UserRole.THUTHU])
+    def import_sach_excel():
+        if request.method == 'POST':
+            file = request.files.get('file')
+            if not file or file.filename == '':
+                return render_template('import_sach.html', message="Vui lòng chọn file Excel!")
+            if not file.filename.lower().endswith(('.xlsx', '.xlsm')):
+                return render_template('import_sach.html', message="Chỉ chấp nhận file Excel .xlsx hoặc .xlsm!")
 
-        return render_template(
-            'them_sach.html',
-            danh_sach_theloai=danh_sach_theloai
-        )
+            try:
+                wb = load_workbook(file, data_only=True)
+                ws = wb.active
+                danh_sach_sach = []
+                headers = [str(cell.value).strip().lower() if cell.value is not None else '' for cell in ws[1]]
+                idx_theloai = headers.index('ten_the_loai') if 'ten_the_loai' in headers else (
+                    headers.index('theloai_id') if 'theloai_id' in headers else 6)
+
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    if not row[0]:
+                        continue
+
+                    ten_sach = str(row[0]).strip()
+                    tac_gia = str(row[1]).strip() if row[1] else ""
+                    nha_xuat_ban = str(row[2]).strip() if row[2] else None
+                    nam_xuat_ban = int(row[3]) if row[3] else None
+                    ngon_ngu = str(row[4]).strip() if row[4] else "Tiếng Việt"
+                    so_trang = int(row[5]) if row[5] else None
+
+                    theloai_id = None
+                    ten_the_loai = None
+                    if len(row) > idx_theloai and row[idx_theloai]:
+                        if headers[idx_theloai] == 'ten_the_loai':
+                            ten_the_loai = str(row[idx_theloai]).strip()
+                        else:
+                            try:
+                                theloai_id = int(row[idx_theloai])
+                            except:
+                                theloai_id = None
+
+                    so_luong = int(row[7]) if row[7] else 0
+                    anh_bia = str(row[8]).strip() if row[8] else None
+                    mo_ta = str(row[9]).strip() if row[9] else None
+
+                    if not tac_gia:
+                        continue
+
+                    danh_sach_sach.append({
+                        "ten_sach": ten_sach, "tac_gia": tac_gia, "nha_xuat_ban": nha_xuat_ban,
+                        "nam_xuat_ban": nam_xuat_ban, "ngon_ngu": ngon_ngu, "so_trang": so_trang,
+                        "theloai_id": theloai_id, "ten_the_loai": ten_the_loai, "so_luong": so_luong,
+                        "anh_bia": anh_bia, "mo_ta": mo_ta
+                    })
+
+                if not danh_sach_sach:
+                    return render_template('import_sach.html', message="File Excel không có dữ liệu hợp lệ!")
+
+                success, message = dao.import_sach_tu_excel(danh_sach_sach)
+                return render_template('import_sach.html', message=message, success=success)
+
+            except Exception as e:
+                print("LỖI ĐỌC FILE EXCEL:", repr(e))
+                return render_template('import_sach.html', message="Không thể đọc file Excel!")
+
+        return render_template('import_sach.html')
 
     @app.route(
         '/admin/sach/<int:sach_id>/sua',
@@ -1112,127 +1113,6 @@ def register_routes(app):
         return redirect(
             url_for('quan_ly_nguoi_dung')
         )
-
-    @app.route('/admin/sach/import', methods=['GET', 'POST'])
-    @role_required([UserRole.ADMIN, UserRole.THUTHU])
-    def import_sach_excel():
-
-        if request.method == 'POST':
-            file = request.files.get('file')
-
-            if not file or file.filename == '':
-                return render_template(
-                    'import_sach.html',
-                    message="Vui lòng chọn file Excel!"
-                )
-
-            if not file.filename.lower().endswith(('.xlsx', '.xlsm')):
-                return render_template(
-                    'import_sach.html',
-                    message="Chỉ chấp nhận file Excel .xlsx hoặc .xlsm!"
-                )
-
-            try:
-                wb = load_workbook(file, data_only=True)
-                ws = wb.active
-
-                danh_sach_sach = []
-
-                # Đọc tiêu đề để hỗ trợ cả file mới (ten_the_loai)
-                # và file cũ (theloai_id). Database vẫn lưu Sach.theloai_id.
-                headers = [
-                    str(cell.value).strip().lower() if cell.value is not None else ''
-                    for cell in ws[1]
-                ]
-                idx_theloai = headers.index('ten_the_loai') if 'ten_the_loai' in headers else (headers.index('theloai_id') if 'theloai_id' in headers else 6)
-
-                for row in ws.iter_rows(min_row=2, values_only=True):
-
-                    if not row[0]:
-                        continue
-
-                    ten_sach = str(row[0]).strip()
-                    tac_gia = str(row[1]).strip() if row[1] else ""
-
-                    nha_xuat_ban = str(row[2]).strip() if row[2] else None
-
-                    nam_xuat_ban = None
-                    if row[3]:
-                        try:
-                            nam_xuat_ban = int(row[3])
-                        except:
-                            nam_xuat_ban = None
-
-                    ngon_ngu = str(row[4]).strip() if row[4] else "Tiếng Việt"
-
-                    so_trang = None
-                    if row[5]:
-                        try:
-                            so_trang = int(row[5])
-                        except:
-                            so_trang = None
-
-                    theloai_id = None
-                    ten_the_loai = None
-                    if len(row) > idx_theloai and row[idx_theloai]:
-                        if headers[idx_theloai] == 'ten_the_loai':
-                            ten_the_loai = str(row[idx_theloai]).strip()
-                        else:
-                            try:
-                                theloai_id = int(row[idx_theloai])
-                            except:
-                                theloai_id = None
-
-                    so_luong = 0
-                    if row[7]:
-                        try:
-                            so_luong = int(row[7])
-                        except:
-                            so_luong = 0
-
-                    anh_bia = str(row[8]).strip() if row[8] else None
-                    mo_ta = str(row[9]).strip() if row[9] else None
-
-                    if not tac_gia:
-                        continue
-
-                    danh_sach_sach.append({
-                        "ten_sach": ten_sach,
-                        "tac_gia": tac_gia,
-                        "nha_xuat_ban": nha_xuat_ban,
-                        "nam_xuat_ban": nam_xuat_ban,
-                        "ngon_ngu": ngon_ngu,
-                        "so_trang": so_trang,
-                        "theloai_id": theloai_id,
-                        "ten_the_loai": ten_the_loai,
-                        "so_luong": so_luong,
-                        "anh_bia": anh_bia,
-                        "mo_ta": mo_ta
-                    })
-
-                if not danh_sach_sach:
-                    return render_template(
-                        'import_sach.html',
-                        message="File Excel không có dữ liệu hợp lệ!"
-                    )
-
-                success, message = dao.import_sach_tu_excel(danh_sach_sach)
-
-                return render_template(
-                    'import_sach.html',
-                    message=message,
-                    success=success
-                )
-
-            except Exception as e:
-                print("LỖI ĐỌC FILE EXCEL:", repr(e))
-
-                return render_template(
-                    'import_sach.html',
-                    message="Không thể đọc file Excel!"
-                )
-
-        return render_template('import_sach.html')
 
     @app.route('/admin/the-loai')
     @role_required([UserRole.ADMIN, UserRole.THUTHU])
