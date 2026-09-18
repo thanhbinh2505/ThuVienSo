@@ -35,17 +35,13 @@ def rollback():
 def get_list_theloai():
     return TheLoai.query.order_by(TheLoai.tenTheLoai).all()
 
+
 def tim_kiem_sach(tu_khoa="", theloai_id=None, page=1, page_size=12, sort="moi_nhat"):
     query = Sach.query
-
     if tu_khoa:
         tu_khoa_like = f"%{tu_khoa.strip()}%"
-        query = query.filter(or_(
-            Sach.tenSach.ilike(tu_khoa_like),
-            Sach.tacGia.ilike(tu_khoa_like),
-            Sach.moTa.ilike(tu_khoa_like),
-        ))
-
+        query = query.filter(
+            or_(Sach.tenSach.ilike(tu_khoa_like), Sach.tacGia.ilike(tu_khoa_like), Sach.moTa.ilike(tu_khoa_like)))
     if theloai_id:
         query = query.filter(Sach.theloai_id == theloai_id)
 
@@ -57,14 +53,10 @@ def tim_kiem_sach(tu_khoa="", theloai_id=None, page=1, page_size=12, sort="moi_n
         query = query.order_by(Sach.ngayTao.desc())
 
     total = query.count()
-    ds_sach = query.offset((page - 1) * page_size).limit(page_size).all()
-
     return {
-        "total": total,
-        "page": page,
-        "page_size": page_size,
+        "total": total, "page": page, "page_size": page_size,
         "total_pages": max(1, (total + page_size - 1) // page_size),
-        "items": [s.to_dict() for s in ds_sach],
+        "items": [s.to_dict() for s in query.offset((page - 1) * page_size).limit(page_size).all()]
     }
 
 def get_sach_by_id(sach_id):
@@ -725,21 +717,10 @@ def get_all_users():
 
 
 def tim_kiem_user(tu_khoa=""):
-
     query = User.query
-
     if tu_khoa:
         tu_khoa = tu_khoa.strip()
-
-        query = query.filter(
-            or_(
-                User.username.ilike(f"%{tu_khoa}%"),
-                User.hoTen.ilike(f"%{tu_khoa}%"),
-                User.email.ilike(f"%{tu_khoa}%"),
-                User.soDienThoai.ilike(f"%{tu_khoa}%")
-            )
-        )
-
+        query = query.filter(or_(User.username.ilike(f"%{tu_khoa}%"), User.hoTen.ilike(f"%{tu_khoa}%"), User.email.ilike(f"%{tu_khoa}%"), User.soDienThoai.ilike(f"%{tu_khoa}%")))
     return query.order_by(User.id.desc()).all()
 
 

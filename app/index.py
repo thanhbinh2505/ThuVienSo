@@ -22,27 +22,10 @@ def register_routes(app):
     @app.route('/')
     def index():
         ds_theloai = dao.get_list_theloai()
-
         theloai_id = request.args.get('theloai_id', type=int)
-        ket_qua = dao.tim_kiem_sach(
-            theloai_id=theloai_id,
-            page=1,
-            page_size=12
-        )
-
-        sach_goi_y = []
-
-        if current_user.is_authenticated:
-            sach_goi_y = dao.get_sach_goi_y(
-                current_user.id
-            )
-
-        return render_template(
-            'index.html',
-            ds_theloai=ds_theloai,
-            ket_qua=ket_qua,
-            sach_goi_y=sach_goi_y
-        )
+        ket_qua = dao.tim_kiem_sach(theloai_id=theloai_id, page=1, page_size=12)
+        sach_goi_y = dao.get_sach_goi_y(current_user.id) if current_user.is_authenticated else []
+        return render_template('index.html', ds_theloai=ds_theloai, ket_qua=ket_qua, sach_goi_y=sach_goi_y)
 
     @app.route('/the-loai')
     def danh_sach_the_loai():
@@ -60,15 +43,10 @@ def register_routes(app):
         try:
             data = schemas.TimKiemSachSchema().load(request.args)
         except ValidationError as err:
-            return jsonify({"success": False, "message": "Tham số không hợp lệ!",
-                             "errors": err.messages}), 400
+            return jsonify({"success": False, "message": "Tham số không hợp lệ!", "errors": err.messages}), 400
 
-        ket_qua = dao.tim_kiem_sach(
-            tu_khoa=data.get('q', ''),
-            theloai_id=data.get('theloai_id'),
-            page=data.get('page', 1),
-            sort=data.get('sort', 'moi_nhat'),
-        )
+        ket_qua = dao.tim_kiem_sach(tu_khoa=data.get('q', ''), theloai_id=data.get('theloai_id'),
+                                    page=data.get('page', 1), sort=data.get('sort', 'moi_nhat'))
         return jsonify({"success": True, **ket_qua}), 200
 
     @app.route('/api/theloai', methods=['GET'])
