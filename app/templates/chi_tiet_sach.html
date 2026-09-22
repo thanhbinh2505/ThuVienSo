@@ -1,965 +1,238 @@
 {% extends 'layout/base.html' %}
-
 {% block title %}{{ sach.tenSach }}{% endblock %}
-
 {% block content %}
-
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+<div id="book-detail-page" data-book-id="{{ sach.id }}" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
     <nav class="flex text-sm text-slate-500 font-medium mb-8 items-center">
-
         <a href="/" class="hover:text-primary flex items-center gap-1 transition-colors">
             <i data-lucide="home" class="w-4 h-4"></i>
             Trang chủ
         </a>
-
         <span class="mx-2 text-gray-300">/</span>
-
         {% if sach.the_loai %}
-        <span class="text-slate-400">
-            {{ sach.the_loai.tenTheLoai }}
-        </span>
-
+        <span class="text-slate-400">{{ sach.the_loai.tenTheLoai }}</span>
         <span class="mx-2 text-gray-300">/</span>
         {% endif %}
-
-        <span class="text-primary font-semibold truncate max-w-xs">
-            {{ sach.tenSach }}
-        </span>
-
+        <span class="text-primary font-semibold truncate max-w-xs">{{ sach.tenSach }}</span>
     </nav>
-
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div class="lg:col-span-4">
             <div class="sticky top-28">
                 <div class="rounded-2xl overflow-hidden shadow-soft border border-gray-100 bg-white">
-                    <img
-                        src="{{ sach.anhBia }}"
-                        alt="{{ sach.tenSach }}"
-                        class="w-full aspect-[3/4] object-cover"
-                        onerror="this.src='/static/image/default.png'">
+                    <img src="{{ sach.anhBia }}" alt="{{ sach.tenSach }}" class="w-full aspect-[3/4] object-cover" onerror="this.src='/static/image/default.png'">
                 </div>
             </div>
         </div>
         <div class="lg:col-span-8">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2">
-                {{ sach.tenSach }}
-            </h1>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2">{{ sach.tenSach }}</h1>
             <p class="text-lg text-slate-500 mb-4">
                 Tác giả:
-                <span class="font-semibold text-slate-700">
-                    {{ sach.tacGia }}
-                </span>
+                <span class="font-semibold text-slate-700">{{ sach.tacGia }}</span>
             </p>
             <div class="flex flex-wrap items-center gap-4 mb-6">
                 <div class="flex items-center gap-1 text-amber-500 font-bold">
                     <i data-lucide="star" class="w-5 h-5 fill-current"></i>
-                    <span id="average-rating">
-                        {{ "%.1f"|format(sach.diemDanhGiaTB or 0) }}
-                    </span>
-                    <span class="text-slate-400 font-normal text-sm">
-                        / 5
-                    </span>
-                    <span
-                        id="rating-count"
-                        class="text-slate-400 font-normal text-sm">
-                        ({{ sach.soLuotDanhGia or 0 }} lượt đánh giá)
-                    </span>
+                    <span class="js-average-rating">{{ "%.1f"|format(sach.diemDanhGiaTB or 0) }}</span>
+                    <span class="text-slate-400 font-normal text-sm">/ 5</span>
+                    <span class="js-rating-count text-slate-400 font-normal text-sm">({{ sach.soLuotDanhGia or 0 }} lượt đánh giá)</span>
                 </div>
-                <span
-                    class="px-3 py-1 rounded-full text-xs font-bold
-                    {% if sach.soLuongConLai > 0 %}
-                        bg-green-100 text-green-600
-                    {% else %}
-                        bg-red-100 text-red-500
-                    {% endif %}"
-                >
-
-                    {{
-                        'Còn sách (%d bản)'|format(sach.soLuongConLai)
-                        if sach.soLuongConLai > 0
-                        else 'Hết sách'
-                    }}
-                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold {% if sach.soLuongConLai > 0 %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-500{% endif %}">{{ 'Còn sách (%d bản)'|format(sach.soLuongConLai) if sach.soLuongConLai > 0 else 'Hết sách' }}</span>
             </div>
             {% if current_user.is_authenticated and current_user.role.name == 'DOCGIA' %}
 <div class="mt-6 flex flex-wrap gap-3">
     {% if sach.soLuongConLai > 0 %}
-    <button
-        id="btn-borrow"
-        type="button"
-        class="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition">
-        📚 Đăng ký mượn sách
-    </button>
+    <button id="btn-borrow" type="button" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition">📚 Đăng ký mượn sách</button>
     {% else %}
-    <button
-        type="button"
-        disabled
-        class="px-6 py-3 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed">
-        Hết sách
-    </button>
+    <button type="button" disabled class="px-6 py-3 bg-gray-300 text-gray-500 rounded-xl font-semibold cursor-not-allowed">Hết sách</button>
     {% endif %}
-    <button
-        id="btn-favorite"
-        type="button"
-        class="px-6 py-3 bg-red-50 text-red-500 border border-red-200 rounded-xl font-semibold hover:bg-red-100 transition">
-        ❤️ Yêu thích
-    </button>
+    <button id="btn-favorite" type="button" class="px-6 py-3 bg-red-50 text-red-500 border border-red-200 rounded-xl font-semibold hover:bg-red-100 transition">❤️ Yêu thích</button>
 </div>
 <p id="borrow-message" class="text-sm mt-3"></p>
 <p id="favorite-message" class="text-sm mt-2"></p>
 {% endif %}
+
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-                <h2 class="text-lg font-bold text-slate-800 mb-3">
-                    Đánh giá sách
-                </h2>
-                {% if current_user.is_authenticated %}
-                <p class="text-sm text-slate-500 mb-3">
-                    Hãy chọn số sao để đánh giá cuốn sách này
-                </p>
-                <div
-                    class="flex gap-2"
-                    id="rating-stars">
-                    {% for i in range(1, 6) %}
-                    <button
-                        type="button"
-                        class="rating-star text-gray-300 hover:text-amber-400 transition text-3xl"
-                        data-rating="{{ i }}">
-                        ★
-                    </button>
-                    {% endfor %}
-                </div>
-                <p
-                    id="rating-message"
-                    class="text-sm mt-3"
-                ></p>
-                {% else %}
-                <p class="text-slate-500">
-                    Bạn cần
-                    <a
-                        href="{{ url_for('login_process') }}"
-                        class="text-primary font-semibold hover:underline">
-                        đăng nhập
-                    </a>
-                    để đánh giá sách.</p>
-                {% endif %}
-            </div>
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-
-                <h2 class="text-lg font-bold text-slate-800 mb-4">
-                    Bình luận sách
-                </h2>
-
-
-                {% if current_user.is_authenticated %}
-
-                <div class="mb-6">
-
-                    <textarea
-                        id="comment-input"
-                        rows="4"
-                        placeholder="Viết bình luận của bạn..."
-                        class="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                    ></textarea>
-
-
-                    <div class="flex justify-end mt-3">
-
-                        <button
-                            type="button"
-                            id="btn-comment"
-                            class="px-5 py-2.5 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition"
-                        >
-                            Gửi bình luận
-                        </button>
-
-                    </div>
-
-
-                    <p
-                        id="comment-message"
-                        class="text-sm mt-2"
-                    ></p>
-
-                </div>
-
-                {% else %}
-
-                <p class="text-slate-500 mb-5">
-
-                    Bạn cần
-
-                    <a
-                        href="{{ url_for('login_process') }}"
-                        class="text-primary font-semibold hover:underline"
-                    >
-                        đăng nhập
-                    </a>
-
-                    để bình luận.
-
-                </p>
-
-                {% endif %}
-
-
-                <!-- DANH SÁCH BÌNH LUẬN -->
-
-                <div
-                    id="comment-list"
-                    class="space-y-4"
-                >
-
-                    {% if danh_sach_binh_luan %}
-
-                        {% for bl in danh_sach_binh_luan %}
-
-                        <div
-                            id="comment-{{ bl.id }}"
-                            class="border-b border-gray-100 pb-4"
-                        >
-
-                            <div class="flex justify-between items-start gap-4">
-
-                                <div>
-
-                                    <p class="font-semibold text-slate-800">
-                                        {{ bl.user.hoTen }}
-                                    </p>
-
-                                    <p class="text-xs text-slate-400 mt-1">
-                                        {{ bl.ngayTao.strftime('%d/%m/%Y %H:%M') }}
-                                    </p>
-
-                                </div>
-
-
-                                {% if current_user.is_authenticated
-                                      and current_user.id == bl.user_id %}
-
-                                <button
-                    type="button"
-                    class="btn-delete-comment text-sm text-red-500 hover:underline"
-                    data-comment-id="{{ bl.id }}"
-                >
-                    Xóa
-                </button>
-
-                                {% endif %}
-
-                            </div>
-
-
-                            <p class="text-slate-600 mt-3 whitespace-pre-line">
-                                {{ bl.noiDung }}
-                            </p>
-
-                        </div>
-
-                        {% endfor %}
-
-                    {% else %}
-
-                    <p
-                        id="no-comment"
-                        class="text-slate-400"
-                    >
-                        Chưa có bình luận nào.
-                    </p>
-
-                    {% endif %}
-
-                </div>
-
-            </div>
-
-
-            <!-- THÔNG TIN XUẤT BẢN -->
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-
                 <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-
-                    <i
-                        data-lucide="info"
-                        class="w-5 h-5 text-primary"
-                    ></i>
-
+                    <i data-lucide="info" class="w-5 h-5 text-primary"></i>
                     Thông tin xuất bản
-
                 </h2>
-
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
-
                     <div class="flex justify-between border-b border-gray-100 pb-3">
-
-                        <span class="text-slate-500">
-                            Nhà xuất bản
-                        </span>
-
-                        <span class="font-semibold text-slate-800">
-                            {{ sach.nhaXuatBan or 'Đang cập nhật' }}
-                        </span>
-
+                        <span class="text-slate-500">Nhà xuất bản</span>
+                        <span class="font-semibold text-slate-800">{{ sach.nhaXuatBan or 'Đang cập nhật' }}</span>
                     </div>
-
-
                     <div class="flex justify-between border-b border-gray-100 pb-3">
-
-                        <span class="text-slate-500">
-                            Năm xuất bản
-                        </span>
-
-                        <span class="font-semibold text-slate-800">
-                            {{ sach.namXuatBan or 'Đang cập nhật' }}
-                        </span>
-
+                        <span class="text-slate-500">Năm xuất bản</span>
+                        <span class="font-semibold text-slate-800">{{ sach.namXuatBan or 'Đang cập nhật' }}</span>
                     </div>
-
-
                     <div class="flex justify-between border-b border-gray-100 pb-3">
-
-                        <span class="text-slate-500">
-                            Số trang
-                        </span>
-
-                        <span class="font-semibold text-slate-800">
-                            {{ sach.soTrang or 'Đang cập nhật' }}
-                        </span>
-
+                        <span class="text-slate-500">Số trang</span>
+                        <span class="font-semibold text-slate-800">{{ sach.soTrang or 'Đang cập nhật' }}</span>
                     </div>
-
-
                     <div class="flex justify-between border-b border-gray-100 pb-3">
-
-                        <span class="text-slate-500">
-                            Ngôn ngữ
-                        </span>
-
-                        <span class="font-semibold text-slate-800">
-                            {{ sach.ngonNgu or 'Đang cập nhật' }}
-                        </span>
-
+                        <span class="text-slate-500">Ngôn ngữ</span>
+                        <span class="font-semibold text-slate-800">{{ sach.ngonNgu or 'Đang cập nhật' }}</span>
                     </div>
-
                 </div>
-
             </div>
 
-
-            <!-- GIỚI THIỆU -->
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-
-                <h2 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-
-                    Giới thiệu sách
-
-                </h2>
-
-                <p class="text-slate-600 leading-relaxed whitespace-pre-line">
-
-                    {{ sach.moTa or 'Sách hiện chưa có mô tả chi tiết.' }}
-
-                </p>
-
+                <h2 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">Giới thiệu sách</h2>
+                <p class="text-slate-600 leading-relaxed whitespace-pre-line">{{ sach.moTa or 'Sách hiện chưa có mô tả chi tiết.' }}</p>
             </div>
-
         </div>
-
     </div>
 
-
-    <!-- SÁCH CÙNG THỂ LOẠI -->
-
-    {% if sach_lien_quan %}
-
-    <section class="mt-16">
-
-        <h2 class="text-2xl font-bold text-slate-900 mb-6">
-            Sách cùng thể loại
-        </h2>
-
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-
-            {% for s in sach_lien_quan %}
-
-            <a
-                href="/sach/{{ s.id }}"
-                class="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300"
-            >
-
-                <div class="aspect-[3/4] overflow-hidden bg-slate-100">
-
-                    <img
-                        src="{{ s.anhBia }}"
-                        alt="{{ s.tenSach }}"
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onerror="this.src='/static/image/default.png'"
-                    >
-
+    <section class="mt-12">
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-soft overflow-hidden">
+            <div class="px-6 md:px-8 pt-7 pb-5 border-b border-gray-100 bg-gradient-to-r from-white to-slate-50">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                        <i data-lucide="star" class="w-6 h-6 fill-current"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-slate-900">Đánh giá & Bình luận</h2>
+                        <p class="text-sm text-slate-500 mt-1">Chia sẻ cảm nhận của bạn và xem ý kiến từ những độc giả khác.</p>
+                    </div>
                 </div>
-
-
-                <div class="p-4">
-
-                    <h3 class="font-bold text-slate-900 line-clamp-2 mb-1 group-hover:text-primary transition-colors">
-                        {{ s.tenSach }}
-                    </h3>
-
-                    <p class="text-sm text-slate-500 truncate">
-                        {{ s.tacGia }}
-                    </p>
-
-                </div>
-
-            </a>
-
-            {% endfor %}
-
-        </div>
-
-    </section>
-
-    {% endif %}
-
-</div>
-
-
-<script>
-
-document.addEventListener('DOMContentLoaded', function () {
-
-    const stars = document.querySelectorAll('.rating-star');
-    const message = document.getElementById('rating-message');
-
-
-    stars.forEach(function(star) {
-
-        star.addEventListener('click', function () {
-
-            const rating =
-                parseInt(this.dataset.rating);
-
-
-            fetch(
-                '/api/sach/{{ sach.id }}/danh-gia',
-                {
-                    method: 'POST',
-
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-
-                    body: JSON.stringify({
-                        so_sao: rating
-                    })
-                }
-            )
-
-            .then(response => response.json())
-
-            .then(data => {
-
-                if (data.success) {
-
-                    message.textContent =
-                        '✓ ' + data.message;
-
-                    message.className =
-                        'text-sm mt-3 text-green-600 font-semibold';
-
-
-                    document.getElementById(
-                        'average-rating'
-                    ).textContent =
-                        data.diemDanhGiaTB;
-
-
-                    document.getElementById(
-                        'rating-count'
-                    ).textContent =
-                        '(' +
-                        data.soLuotDanhGia +
-                        ' lượt đánh giá)';
-
-
-                    stars.forEach(function(s) {
-
-                        if (
-                            parseInt(s.dataset.rating)
-                            <= rating
-                        ) {
-
-                            s.classList.remove(
-                                'text-gray-300'
-                            );
-
-                            s.classList.add(
-                                'text-amber-400'
-                            );
-
-                        } else {
-
-                            s.classList.remove(
-                                'text-amber-400'
-                            );
-
-                            s.classList.add(
-                                'text-gray-300'
-                            );
-
-                        }
-
-                    });
-
-                } else {
-
-                    message.textContent =
-                        data.message;
-
-                    message.className =
-                        'text-sm mt-3 text-red-500';
-
-                }
-
-            })
-
-            .catch(function(error) {
-
-                console.error(error);
-
-                message.textContent =
-                    'Có lỗi xảy ra khi đánh giá!';
-
-                message.className =
-                    'text-sm mt-3 text-red-500';
-
-            });
-
-        });
-
-    });
-
-});
-
-</script>
-
-
-<script>
-
-const btnComment =
-    document.getElementById('btn-comment');
-
-const commentInput =
-    document.getElementById('comment-input');
-
-const commentMessage =
-    document.getElementById('comment-message');
-
-const commentList =
-    document.getElementById('comment-list');
-
-
-if (btnComment) {
-
-    btnComment.addEventListener(
-        'click',
-        async function () {
-
-            const noiDung =
-                commentInput.value.trim();
-
-
-            if (!noiDung) {
-
-                commentMessage.textContent =
-                    'Vui lòng nhập nội dung bình luận!';
-
-                commentMessage.className =
-                    'text-sm mt-2 text-red-500';
-
-                return;
-            }
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        '/api/sach/{{ sach.id }}/binh-luan',
-                        {
-                            method: 'POST',
-
-                            headers: {
-                                'Content-Type':
-                                    'application/json'
-                            },
-
-                            body: JSON.stringify({
-                                noi_dung: noiDung
-                            })
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                if (!data.success) {
-
-                    commentMessage.textContent =
-                        data.message;
-
-                    commentMessage.className =
-                        'text-sm mt-2 text-red-500';
-
-                    return;
-                }
-
-
-                const noComment =
-                    document.getElementById('no-comment');
-
-
-                if (noComment) {
-                    noComment.remove();
-                }
-
-
-                const comment =
-                    data.data;
-
-
-                const html = `
-
-                    <div
-                        id="comment-${comment.id}"
-                        class="border-b border-gray-100 pb-4"
-                    >
-
-                        <div
-                            class="flex justify-between items-start gap-4"
-                        >
-
-                            <div>
-
-                                <p class="font-semibold text-slate-800">
-                                    ${escapeHtml(comment.hoTen)}
-                                </p>
-
-                                <p class="text-xs text-slate-400 mt-1">
-                                    ${comment.ngayTao}
-                                </p>
-
+            </div>
+            <div class="p-6 md:p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Đánh giá sao -->
+                    <div class="lg:col-span-4">
+                        <div class="h-full rounded-2xl bg-slate-50 border border-slate-100 p-6">
+                            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Đánh giá trung bình</p>
+                            <div class="flex items-end gap-3 mt-3">
+                                <span class="js-average-rating text-5xl font-extrabold text-slate-900">{{ "%.1f"|format(sach.diemDanhGiaTB or 0) }}</span>
+                                <span class="text-slate-400 text-lg mb-1">/ 5</span>
                             </div>
-
-
-                            <button
-                                type="button"
-                                onclick="xoaBinhLuan(${comment.id})"
-                                class="text-sm text-red-500 hover:underline"
-                            >
-                                Xóa
-                            </button>
-
+                            <div class="flex items-center gap-1 mt-3 text-amber-400">
+                                {% for i in range(1, 6) %}
+                                    <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="js-rating-count" class="text-sm text-slate-500 mt-2">{{ sach.soLuotDanhGia or 0 }} lượt đánh giá</p>
+                            <div class="mt-6 pt-5 border-t border-slate-200">
+                                {% if current_user.is_authenticated %}
+                                    <p class="font-semibold text-slate-800">Đánh giá cuốn sách này</p>
+                                    <p class="text-sm text-slate-500 mt-1">Chọn số sao bạn muốn gửi.</p>
+                                    <div id="rating-stars" class="flex items-center gap-1.5 mt-4">
+                                        {% for i in range(1, 6) %}
+                                            <button type="button" class="rating-star group p-1 rounded-lg text-slate-300 hover:bg-amber-50 hover:text-amber-400 transition-all duration-200" data-rating="{{ i }}" aria-label="{{ i }} sao">
+                                                <i data-lucide="star" class="w-8 h-8 stroke-[1.8] transition-transform duration-200 group-hover:scale-110"></i>
+                                            </button>
+                                        {% endfor %}
+                                    </div>
+                                    <p id="rating-message" class="text-sm mt-3 min-h-[20px]"></p>
+                                {% else %}
+                                    <p class="text-sm text-slate-500 leading-relaxed">
+                                        Bạn cần <a href="{{ url_for('login_process') }}" class="text-primary font-semibold hover:underline">đăng nhập</a> để đánh giá sách.
+                                    </p>
+                                {% endif %}
+                            </div>
                         </div>
-
-
-                        <p class="text-slate-600 mt-3 whitespace-pre-line">
-                            ${escapeHtml(comment.noiDung)}
-                        </p>
-
                     </div>
 
-                `;
-
-
-                commentList.insertAdjacentHTML(
-                    'afterbegin',
-                    html
-                );
-
-
-                commentInput.value = '';
-
-
-                commentMessage.textContent =
-                    '✓ Bình luận thành công!';
-
-                commentMessage.className =
-                    'text-sm mt-2 text-green-600 font-semibold';
-
-            } catch (error) {
-
-                console.error(error);
-
-                commentMessage.textContent =
-                    'Có lỗi xảy ra khi bình luận!';
-
-                commentMessage.className =
-                    'text-sm mt-2 text-red-500';
-
-            }
-
-        }
-    );
-
-}
-
-
-async function xoaBinhLuan(id) {
-
-    if (
-        !confirm(
-            'Bạn có chắc muốn xóa bình luận này?'
-        )
-    ) {
-        return;
-    }
-
-
-    try {
-
-        const response =
-            await fetch(
-                `/api/binh-luan/${id}`,
-                {
-                    method: 'DELETE'
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (data.success) {
-
-            const comment =
-                document.getElementById(
-                    `comment-${id}`
-                );
-
-
-            if (comment) {
-                comment.remove();
-            }
-
-        } else {
-
-            alert(data.message);
-
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            'Có lỗi xảy ra khi xóa bình luận!'
-        );
-
-    }
-
-}
-
-
-function escapeHtml(str) {
-
-    const div =
-        document.createElement('div');
-
-    div.innerText =
-        str ?? '';
-
-    return div.innerHTML;
-
-}
-
-</script>
-
-<script>
-const btnBorrow = document.getElementById('btn-borrow');
-const borrowMessage = document.getElementById('borrow-message');
-
-if (btnBorrow) {
-
-    btnBorrow.addEventListener('click', async function () {
-
-        const confirmed = confirm(
-            'Bạn có chắc muốn đăng ký mượn cuốn sách này không?'
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
-        btnBorrow.disabled = true;
-        btnBorrow.textContent = 'Đang gửi...';
-
-        try {
-
-            const response = await fetch(
-                '/api/sach/{{ sach.id }}/muon',
-                {
-                    method: 'POST'
-                }
-            );
-
-            const data = await response.json();
-
-            if (data.success) {
-
-                borrowMessage.textContent =
-                    '✓ ' + data.message;
-
-                borrowMessage.className =
-                    'text-sm mt-3 text-green-600 font-semibold';
-
-                btnBorrow.textContent = 'Đã đăng ký mượn';
-
-                btnBorrow.classList.remove('bg-primary');
-                btnBorrow.classList.add('bg-gray-400');
-
-            } else {
-
-                borrowMessage.textContent =
-                    data.message;
-
-                borrowMessage.className =
-                    'text-sm mt-3 text-red-500';
-
-                btnBorrow.disabled = false;
-                btnBorrow.textContent =
-                    '📚 Đăng ký mượn sách';
-            }
-
-        } catch (error) {
-
-            console.error(error);
-
-            borrowMessage.textContent =
-                'Có lỗi xảy ra khi đăng ký mượn!';
-
-            borrowMessage.className =
-                'text-sm mt-3 text-red-500';
-
-            btnBorrow.disabled = false;
-            btnBorrow.textContent =
-                '📚 Đăng ký mượn sách';
-        }
-
-    });
-
-}
-</script>
-
-<script>
-
-const btnFavorite =
-    document.getElementById('btn-favorite');
-
-const favoriteMessage =
-    document.getElementById('favorite-message');
-
-
-if (btnFavorite) {
-
-    btnFavorite.addEventListener(
-        'click',
-        async function () {
-
-            btnFavorite.disabled = true;
-
-            try {
-
-                const response =
-                    await fetch(
-                        '/api/sach/{{ sach.id }}/yeu-thich',
-                        {
-                            method: 'POST'
-                        }
-                    );
-
-                const data =
-                    await response.json();
-
-
-                if (data.success) {
-
-                    favoriteMessage.textContent =
-                        '✓ ' + data.message;
-
-                    favoriteMessage.className =
-                        'text-sm mt-2 text-green-600 font-semibold';
-
-
-                    if (data.da_yeu_thich) {
-
-                        btnFavorite.innerHTML =
-                            '❤️ Đã yêu thích';
-
-                        btnFavorite.classList.remove(
-                            'bg-red-50',
-                            'text-red-500',
-                            'border-red-200'
-                        );
-
-                        btnFavorite.classList.add(
-                            'bg-red-500',
-                            'text-white'
-                        );
-
-                    } else {
-
-                        btnFavorite.innerHTML =
-                            '🤍 Yêu thích';
-
-                        btnFavorite.classList.remove(
-                            'bg-red-500',
-                            'text-white'
-                        );
-
-                        btnFavorite.classList.add(
-                            'bg-red-50',
-                            'text-red-500',
-                            'border-red-200'
-                        );
-
-                    }
-
-                } else {
-
-                    favoriteMessage.textContent =
-                        data.message;
-
-                    favoriteMessage.className =
-                        'text-sm mt-2 text-red-500';
-
-                }
-
-            } catch (error) {
-
-                console.error(error);
-
-                favoriteMessage.textContent =
-                    'Có lỗi xảy ra khi cập nhật yêu thích!';
-
-                favoriteMessage.className =
-                    'text-sm mt-2 text-red-500';
-
-            } finally {
-
-                btnFavorite.disabled = false;
-
-            }
-
-        }
-    );
-
-}
-
-</script>
-
+                    <div class="lg:col-span-8">
+                        <div class="rounded-2xl border border-slate-100 bg-white">
+                            <div class="px-5 py-4 border-b border-slate-100">
+                                <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                                    <i data-lucide="message-circle" class="w-5 h-5 text-primary"></i>
+                                    Viết bình luận
+                                </h3>
+                                <p class="text-sm text-slate-500 mt-1">Hãy chia sẻ cảm nhận của bạn về cuốn sách một cách lịch sự và tích cực.</p>
+                            </div>
+                            <div class="p-5">
+                                {% if current_user.is_authenticated %}
+                                    <textarea id="comment-input" rows="6" maxlength="1000" placeholder="Bạn nghĩ gì về cuốn sách này?" class="w-full border border-slate-200 rounded-2xl p-4 text-slate-700 placeholder:text-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none transition"></textarea>
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-3">
+                                        <span class="text-xs text-slate-400">Tối đa 1000 ký tự</span>
+                                        <button type="button" id="btn-comment" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl font-semibold hover:opacity-90 active:scale-[0.98] transition">
+                                            <i data-lucide="send" class="w-4 h-4"></i>
+                                            Gửi bình luận
+                                        </button>
+                                    </div>
+                                    <p id="comment-message" class="text-sm mt-3 min-h-[20px]"></p>
+                                {% else %}
+                                    <div class="rounded-2xl bg-slate-50 border border-dashed border-slate-200 p-6 text-center">
+                                        <i data-lucide="lock" class="w-7 h-7 mx-auto text-slate-400"></i>
+                                        <p class="text-slate-600 mt-3">
+                                            Bạn cần <a href="{{ url_for('login_process') }}" class="text-primary font-semibold hover:underline">đăng nhập</a> để tham gia bình luận.
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-10 pt-8 border-t border-slate-100">
+                    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="messages-square" class="w-5 h-5 text-primary"></i>
+                                Bình luận từ độc giả
+                            </h3>
+                            <p class="text-sm text-slate-500 mt-1">Những chia sẻ đã được đăng về cuốn sách này.</p>
+                        </div>
+                        <span id="comment-count" class="text-sm font-medium text-slate-500">{{ danh_sach_binh_luan|length }} bình luận</span>
+                    </div>
+                    <div id="comment-list" class="space-y-4">
+                        {% if danh_sach_binh_luan %}
+                            {% for bl in danh_sach_binh_luan %}
+                                <article id="comment-{{ bl.id }}" class="group rounded-2xl border border-slate-100 bg-slate-50/60 p-5 hover:bg-white hover:shadow-sm transition-all">
+                                    <div class="flex items-start gap-4">
+                                        <div class="shrink-0 w-11 h-11 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                            {{ bl.user.hoTen[:1]|upper }}
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                <div>
+                                                    <p class="font-bold text-slate-800">{{ bl.user.hoTen }}</p>
+                                                    <p class="text-xs text-slate-400 mt-1">{{ bl.ngayTao.strftime('%d/%m/%Y lúc %H:%M') }}</p>
+                                                </div>
+                                                {% if current_user.is_authenticated and current_user.id == bl.user_id %}
+                                                    <button type="button" class="btn-delete-comment inline-flex items-center gap-1.5 self-start text-xs font-semibold text-red-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition" data-comment-id="{{ bl.id }}">
+                                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                        Xóa
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                            <p class="text-slate-600 mt-4 leading-7 whitespace-pre-line">{{ bl.noiDung }}</p>
+                                        </div>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% else %}
+                            <div id="no-comment" class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-10 text-center">
+                                <i data-lucide="message-square" class="w-9 h-9 mx-auto text-slate-300"></i>
+                                <p class="text-slate-500 mt-3 font-medium">Chưa có bình luận nào.</p>
+                                <p class="text-sm text-slate-400 mt-1">Hãy là người đầu tiên chia sẻ cảm nhận về cuốn sách này.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% if sach_lien_quan %}
+    <section class="mt-16">
+        <h2 class="text-2xl font-bold text-slate-900 mb-6">Sách cùng thể loại</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for s in sach_lien_quan %}
+            <a href="/sach/{{ s.id }}" class="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+                <div class="aspect-[3/4] overflow-hidden bg-slate-100">
+                    <img src="{{ s.anhBia }}" alt="{{ s.tenSach }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='/static/image/default.png'">
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-slate-900 line-clamp-2 mb-1 group-hover:text-primary transition-colors">{{ s.tenSach }}</h3>
+                    <p class="text-sm text-slate-500 truncate">{{ s.tacGia }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+<script src="{{ url_for('static', filename='js/chi_tiet_sach.js') }}" defer></script>
 {% endblock %}

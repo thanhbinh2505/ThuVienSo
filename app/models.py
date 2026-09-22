@@ -44,7 +44,7 @@ class User(UserMixin, BaseModel):
 
     oauthProvider = Column(Enum(OAuthProvider), default=OAuthProvider.NONE, nullable=False)
     oauthId = Column(String(191), nullable=True)
-    avatar = Column(String(255), nullable=True)
+    avatar = Column(String(500), nullable=True)
 
     ngayTao = Column(DateTime, default=datetime.now)
     active = Column(Boolean, default=True)

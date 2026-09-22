@@ -1,257 +1,299 @@
 {% extends 'layout/base.html' %}
-
-{% block title %}Sách đang mượn{% endblock %}
-
+{% block title %}Sách của tôi<style>
+.book-tab{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.1rem;border:1px solid;border-radius:.75rem;font-weight:600;transition:.2s}.book-tab:hover{opacity:.9}.book-tab:not(.active){box-shadow:none}.book-tab.active{box-shadow:0 4px 10px rgba(15,23,42,.08)}.tab-count{font-size:.75rem;min-width:1.5rem;padding:.1rem .4rem;border-radius:999px;background:rgba(255,255,255,.2)}.book-tab:not(.active) .tab-count{background:rgba(15,23,42,.06)}
+</style>
+{% endblock %}
 {% block content %}
-
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-
-    <h1 class="text-3xl font-extrabold text-slate-900 mb-2">
-        Sách tôi đang mượn
-    </h1>
-
-    <p class="text-slate-500 mb-8">
-        Danh sách sách bạn đang mượn
-    </p>
-
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
-        {% if danh_sach_dang_muon %}
-
-        <div class="overflow-x-auto">
-
-            <table class="w-full text-sm">
-
-                <thead class="bg-slate-50">
-
-                    <tr>
-
-                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
-                            Sách
-                        </th>
-
-                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
-                            Ngày mượn
-                        </th>
-
-                        <th class="text-left px-6 py-4 font-semibold text-slate-600">
-                            Hạn trả
-                        </th>
-
-                        <th class="text-right px-6 py-4 font-semibold text-slate-600">
-                             Thao tác
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    {% for phieu in danh_sach_dang_muon %}
-
-                    <tr class="border-t border-gray-100">
-
-                        <td class="px-6 py-5">
-
-                            <p class="font-bold text-slate-800">
-                                {{ phieu.sach.tenSach }}
-                            </p>
-
-                            <p class="text-xs text-slate-400 mt-1">
-                                {{ phieu.sach.tacGia }}
-                            </p>
-
-                        </td>
-
-                        <td class="px-6 py-5 text-slate-500">
-
-                            {% if phieu.ngayMuon %}
-                                {{ phieu.ngayMuon.strftime('%d/%m/%Y') }}
-                            {% else %}
-                                Chưa có
-                            {% endif %}
-
-                        </td>
-
-                        <td class="px-6 py-5">
-
-                            {% if phieu.hanTra %}
-                                <span class="font-semibold text-slate-700">
-                                    {{ phieu.hanTra.strftime('%d/%m/%Y') }}
-                                </span>
-                            {% else %}
-                                Chưa có
-                            {% endif %}
-
-                        </td>
-
-                      <td class="px-6 py-5 text-right">
-
-    {% if phieu.trangThai.name == 'CHO_GIA_HAN' %}
-
-        <div class="flex flex-col items-end gap-2">
-
-            <span class="px-3 py-2 rounded-lg bg-amber-100 text-amber-600 text-xs font-semibold">
-                Đang chờ duyệt gia hạn
-            </span>
-
-            <button
-                type="button"
-                onclick="traSach({{ phieu.id }})"
-                class="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition"
-            >
-                📕 Trả sách
-            </button>
-
-        </div>
-
-    {% else %}
-
-        <div class="flex justify-end gap-2">
-
-            <button
-                type="button"
-                onclick="yeuCauGiaHan({{ phieu.id }})"
-                class="px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition"
-            >
-                ⏰ Yêu cầu gia hạn
-            </button>
-
-            <button
-                type="button"
-                onclick="traSach({{ phieu.id }})"
-                class="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition"
-            >
-                📕 Trả sách
-            </button>
-
-        </div>
-
-    {% endif %}
-
-</td>
-
-                    </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        {% else %}
-
-        <div class="text-center py-16">
-
-            <p class="text-slate-400">
-                Bạn hiện không có sách đang mượn.
-            </p>
-
-        </div>
-
-        {% endif %}
-
+    <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Sách của tôi</h1>
+        <p class="text-slate-500">Quản lý sách đang mượn, đã trả và sách quá hạn.</p>
     </div>
 
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="border-b border-gray-100 px-4 sm:px-6 py-3">
+            <div class="flex flex-wrap gap-3" id="book-tabs">
+                <button type="button" class="book-tab active bg-blue-600 text-white border-blue-600" data-tab="dang-muon">
+                    Đang mượn <span class="tab-count">{{ danh_sach_dang_muon|length }}</span>
+                </button>
+                <button type="button" class="book-tab bg-emerald-50 text-emerald-700 border-emerald-200" data-tab="da-tra">
+                    Đã trả <span class="tab-count">{{ danh_sach_da_tra|length }}</span>
+                </button>
+                <button type="button" class="book-tab bg-red-50 text-red-700 border-red-200" data-tab="qua-han">
+                    Quá hạn <span class="tab-count">{{ danh_sach_qua_han|length }}</span>
+                </button>
+            </div>
+        </div>
+
+        <section id="tab-dang-muon" class="book-panel">
+            {% if danh_sach_dang_muon %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b border-gray-100">
+                        <tr>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Sách</th>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Ngày mượn</th>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Hạn trả</th>
+                            <th class="text-center px-6 py-4 font-semibold text-slate-600">Trạng thái</th>
+                            <th class="text-right px-6 py-4 font-semibold text-slate-600">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for phieu in danh_sach_dang_muon %}
+                        <tr class="border-b border-gray-50 last:border-0 hover:bg-slate-50/50">
+                            <td class="px-6 py-5">
+                                <p class="font-bold text-slate-800">{{ phieu.sach.tenSach }}</p>
+                                <p class="text-xs text-slate-400 mt-1">{{ phieu.sach.tacGia }}</p>
+                            </td>
+                            <td class="px-6 py-5 text-slate-500">{{ phieu.ngayMuon.strftime('%d/%m/%Y') if phieu.ngayMuon else 'Chưa có' }}</td>
+                            <td class="px-6 py-5"><span class="font-semibold text-slate-700">{{ phieu.hanTra.strftime('%d/%m/%Y') if phieu.hanTra else 'Chưa có' }}</span></td>
+                            <td class="px-6 py-5 text-center">
+                                {% if phieu.trangThai.name == 'CHO_GIA_HAN' %}
+                                <span class="inline-flex px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700 text-xs font-semibold">Đang chờ duyệt gia hạn</span>
+                                {% else %}
+                                <span class="inline-flex px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold">Đang mượn</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-5 text-right">
+                                {% if phieu.trangThai.name == 'CHO_GIA_HAN' %}
+                                <div class="flex flex-col items-end gap-2">
+                                    <button type="button" class="btn-tra-sach px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition" data-id="{{ phieu.id }}">Trả sách</button>
+                                </div>
+                                {% else %}
+                                <div class="flex justify-end gap-2">
+                                    <button type="button" class="btn-gia-han px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition" data-id="{{ phieu.id }}">Yêu cầu gia hạn</button>
+                                    <button type="button" class="btn-tra-sach px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition" data-id="{{ phieu.id }}">Trả sách</button>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-16"><p class="text-slate-400">Bạn hiện không có sách đang mượn.</p></div>
+            {% endif %}
+        </section>
+
+        <section id="tab-da-tra" class="book-panel hidden">
+            {% if danh_sach_da_tra %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 border-b border-gray-100">
+                        <tr>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Sách</th>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Ngày mượn</th>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Hạn trả</th>
+                            <th class="text-center px-6 py-4 font-semibold text-slate-600">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for phieu in danh_sach_da_tra %}
+                        <tr class="border-b border-gray-50 last:border-0 hover:bg-slate-50/50">
+                            <td class="px-6 py-5">
+                                <p class="font-bold text-slate-800">{{ phieu.sach.tenSach }}</p>
+                                <p class="text-xs text-slate-400 mt-1">{{ phieu.sach.tacGia }}</p>
+                            </td>
+                            <td class="px-6 py-5 text-slate-500">{{ phieu.ngayMuon.strftime('%d/%m/%Y') if phieu.ngayMuon else 'Chưa có' }}</td>
+                            <td class="px-6 py-5 text-slate-500">{{ phieu.hanTra.strftime('%d/%m/%Y') if phieu.hanTra else 'Chưa có' }}</td>
+                            <td class="px-6 py-5 text-center"><span class="inline-flex px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-xs font-semibold">Đã trả</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-16"><p class="text-slate-400">Bạn chưa có sách đã trả.</p></div>
+            {% endif %}
+        </section>
+
+        <section id="tab-qua-han" class="book-panel hidden">
+            {% if danh_sach_qua_han %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-red-50 border-b border-red-100">
+                        <tr>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Sách</th>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Ngày mượn</th>
+                            <th class="text-left px-6 py-4 font-semibold text-slate-600">Hạn trả</th>
+                            <th class="text-center px-6 py-4 font-semibold text-slate-600">Trạng thái</th>
+                            <th class="text-right px-6 py-4 font-semibold text-slate-600">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for phieu in danh_sach_qua_han %}
+                        <tr class="border-b border-gray-50 last:border-0 hover:bg-red-50/30">
+                            <td class="px-6 py-5">
+                                <p class="font-bold text-slate-800">{{ phieu.sach.tenSach }}</p>
+                                <p class="text-xs text-slate-400 mt-1">{{ phieu.sach.tacGia }}</p>
+                            </td>
+                            <td class="px-6 py-5 text-slate-500">{{ phieu.ngayMuon.strftime('%d/%m/%Y') if phieu.ngayMuon else 'Chưa có' }}</td>
+                            <td class="px-6 py-5"><span class="font-bold text-red-600">{{ phieu.hanTra.strftime('%d/%m/%Y') if phieu.hanTra else 'Chưa có' }}</span></td>
+                            <td class="px-6 py-5 text-center">
+                                {% if phieu.trangThai.name == 'CHO_GIA_HAN' %}
+                                <span class="inline-flex px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700 text-xs font-semibold">Chờ duyệt gia hạn</span>
+                                {% else %}
+                                <span class="inline-flex px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold">Đã quá hạn</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-5 text-right">
+                                {% if phieu.trangThai.name == 'CHO_GIA_HAN' %}
+                                <button type="button" class="btn-tra-sach px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition" data-id="{{ phieu.id }}">Trả sách</button>
+                                {% else %}
+                                <div class="flex justify-end gap-2">
+                                    <button type="button" class="btn-gia-han px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:opacity-90 transition" data-id="{{ phieu.id }}">Yêu cầu gia hạn</button>
+                                    <button type="button" class="btn-tra-sach px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition" data-id="{{ phieu.id }}">Trả sách</button>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-16"><p class="text-slate-400">Bạn không có sách quá hạn.</p></div>
+            {% endif %}
+        </section>
+    </div>
 </div>
 
+<style>
+.book-tab{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.1rem;border:1px solid;border-radius:.75rem;font-weight:600;transition:.2s}.book-tab:hover{opacity:.9}.book-tab:not(.active){box-shadow:none}.book-tab.active{box-shadow:0 4px 10px rgba(15,23,42,.08)}.tab-count{font-size:.75rem;min-width:1.5rem;padding:.1rem .4rem;border-radius:999px;background:rgba(255,255,255,.2)}.book-tab:not(.active) .tab-count{background:rgba(15,23,42,.06)}
+</style>
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+    initTabs();
+    initBorrowActions();
+});
 
-async function yeuCauGiaHan(phieuId) {
+function initTabs() {
+    const tabs = document.querySelectorAll('.book-tab');
+    const panels = document.querySelectorAll('.book-panel');
 
-    const xacNhan = confirm(
-        'Bạn có muốn gửi yêu cầu gia hạn thêm 7 ngày không?'
-    );
-
-    if (!xacNhan) {
-        return;
-    }
-
-    try {
-
-        const response = await fetch(
-            `/api/phieu-muon/${phieuId}/gia-han`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-
-        const data = await response.json();
-
-        if (data.success) {
-
-            alert(data.message);
-
-            location.reload();
-
-        } else {
-
-            alert(data.message);
-
+    const styles = {
+        'dang-muon': {
+            active: ['bg-blue-600', 'text-white', 'border-blue-600'],
+            inactive: ['bg-blue-50', 'text-blue-700', 'border-blue-200']
+        },
+        'da-tra': {
+            active: ['bg-emerald-600', 'text-white', 'border-emerald-600'],
+            inactive: ['bg-emerald-50', 'text-emerald-700', 'border-emerald-200']
+        },
+        'qua-han': {
+            active: ['bg-red-600', 'text-white', 'border-red-600'],
+            inactive: ['bg-red-50', 'text-red-700', 'border-red-200']
         }
+    };
 
-    } catch (error) {
+    const setActiveTab = target => {
+        tabs.forEach(tab => {
+            const type = tab.dataset.tab;
+            const style = styles[type];
+            const isActive = type === target;
 
-        console.error(error);
+            tab.classList.remove(
+                'active',
+                'bg-blue-600', 'bg-blue-50', 'text-blue-700',
+                'bg-emerald-600', 'bg-emerald-50', 'text-emerald-700',
+                'bg-red-600', 'bg-red-50', 'text-red-700',
+                'text-white',
+                'border-blue-600', 'border-blue-200',
+                'border-emerald-600', 'border-emerald-200',
+                'border-red-600', 'border-red-200'
+            );
 
-        alert('Có lỗi xảy ra khi gửi yêu cầu gia hạn!');
+            tab.classList.add(...(isActive ? style.active : style.inactive));
+            tab.classList.toggle('active', isActive);
+        });
 
-    }
+        panels.forEach(panel => {
+            panel.classList.toggle(
+                'hidden',
+                panel.id !== `tab-${target}`
+            );
+        });
+    };
 
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            setActiveTab(tab.dataset.tab);
+        });
+    });
+
+    setActiveTab('dang-muon');
 }
 
+function initBorrowActions() {
+    document.addEventListener('click', async event => {
+        const giaHanButton = event.target.closest('.btn-gia-han');
+        const traSachButton = event.target.closest('.btn-tra-sach');
 
-async function traSach(phieuId) {
+        if (giaHanButton) {
+            await yeuCauGiaHan(giaHanButton.dataset.id);
+            return;
+        }
 
-    const xacNhan = confirm(
-        'Bạn có chắc muốn trả sách này không?'
-    );
+        if (traSachButton) {
+            await traSach(traSachButton.dataset.id);
+        }
+    });
+}
 
-    if (!xacNhan) {
+async function yeuCauGiaHan(phieuId) {
+    if (!confirm('Bạn có muốn gửi yêu cầu gia hạn thêm 7 ngày không?')) {
         return;
     }
 
     try {
-
-        const response = await fetch(
-            `/api/phieu-muon/${phieuId}/tra-sach`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+        const response = await fetch(`/api/phieu-muon/${phieuId}/gia-han`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             }
-        );
+        });
 
         const data = await response.json();
 
         if (data.success) {
-
             alert(data.message);
-
             location.reload();
-
         } else {
-
             alert(data.message);
-
         }
-
     } catch (error) {
+        console.error('Lỗi gia hạn:', error);
+        alert('Có lỗi xảy ra khi gửi yêu cầu gia hạn!');
+    }
+}
 
-        console.error(error);
-
-        alert('Có lỗi xảy ra khi trả sách!');
-
+async function traSach(phieuId) {
+    if (!confirm('Bạn có chắc muốn trả sách này không?')) {
+        return;
     }
 
+    try {
+        const response = await fetch(`/api/phieu-muon/${phieuId}/tra-sach`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error('Lỗi trả sách:', error);
+        alert('Có lỗi xảy ra khi trả sách!');
+    }
 }
 </script>
 

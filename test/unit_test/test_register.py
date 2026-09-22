@@ -50,6 +50,8 @@ def test_dao_dang_ky_trung_sdt(seed_data):
     assert msg == "Số điện thoại đã được sử dụng!"
     assert user is None
 
+
+
 def test_route_register_post_success(client, seed_data):
     res = client.post('/register', data={
         'username': 'route_user',

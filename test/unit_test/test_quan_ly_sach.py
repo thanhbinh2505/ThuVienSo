@@ -59,3 +59,13 @@ def test_phan_quyen_trang_quan_ly_sach(client, seed_data):
     client.post('/login', data={'dinh_danh': 'thuthu_test', 'password': 'Password123!'})
     res_thuthu = client.get('/admin/sach')
     assert res_thuthu.status_code == 200
+
+def test_cap_nhat_sach_khong_ton_tai(seed_data):
+    success, msg = dao.cap_nhat_sach(999999, "Tên", "Tác giả")
+    assert success is False
+    assert msg == "Không tìm thấy sách!"
+
+def test_xoa_sach_khong_ton_tai(seed_data):
+    success, msg = dao.xoa_sach(999999)
+    assert success is False
+    assert msg == "Không tìm thấy sách!"

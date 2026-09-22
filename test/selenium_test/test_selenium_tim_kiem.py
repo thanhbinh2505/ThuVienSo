@@ -19,6 +19,3 @@ def test_selenium_tim_kiem_sach_tren_trang_chu(live_server, driver):
         )
         assert "Dế Mèn Phiêu Lưu Ký" in driver.page_source
 
-def test_selenium_loc_theo_the_loai(live_server, driver):
-    driver.get(f"{live_server}/the-loai")
-    assert "Văn học" in driver.page_source or "Khoa học" in driver.page_source

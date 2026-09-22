@@ -39,3 +39,22 @@ def test_api_the_loai(client, seed_data):
     json_data = res.get_json()
     assert isinstance(json_data, list)
     assert len(json_data) == 2
+
+def test_tim_kiem_sach_khong_co_ket_qua(seed_data):
+    result = dao.tim_kiem_sach(tu_khoa="chuoi_khong_ton_tai_xyz")
+    assert result["total"] == 0
+    assert result["items"] == []
+    assert result["total_pages"] == 1
+
+def test_tim_kiem_sach_phan_trang(seed_data):
+    result = dao.tim_kiem_sach(page=2, page_size=2, sort="ten_az")
+    assert result["page"] == 2
+    assert result["page_size"] == 2
+    assert result["total"] == 3
+    assert result["total_pages"] == 2
+    assert len(result["items"]) == 1
+
+def test_tim_kiem_sach_loc_the_loai_khong_co_sach(seed_data):
+    result = dao.tim_kiem_sach(theloai_id=999999)
+    assert result["total"] == 0
+    assert result["items"] == []

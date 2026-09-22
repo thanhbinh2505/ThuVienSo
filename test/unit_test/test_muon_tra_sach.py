@@ -1,5 +1,6 @@
 import pytest
-from app import dao
+from datetime import datetime, timedelta
+from app import dao, db
 from app.models import PhieuMuon, TrangThaiMuon
 
 def test_dang_ky_muon_sach_thanh_cong(seed_data):
@@ -76,3 +77,96 @@ def test_tra_sach(seed_data):
     assert success is True
     assert phieu.trangThai == TrangThaiMuon.DA_TRA
     assert sach1.soLuongConLai == so_luong_sau_muon + 1
+
+def test_gui_gia_han_khi_phieu_khong_thuoc_nguoi_dung(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach1"]
+    dao.dang_ky_muon_sach(user.id, sach.id)
+    phieu = PhieuMuon.query.filter_by(user_id=user.id, sach_id=sach.id).first()
+    dao.duyet_phieu_muon(phieu.id)
+
+    success, msg = dao.gui_yeu_cau_gia_han(seed_data["thuthu"].id, phieu.id)
+    assert success is False
+    assert msg == "Bạn không có quyền gia hạn phiếu mượn này!"
+
+def test_gui_gia_han_khi_chua_duoc_duyet(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach3"]
+    dao.dang_ky_muon_sach(user.id, sach.id)
+    phieu = PhieuMuon.query.filter_by(user_id=user.id, sach_id=sach.id).first()
+
+    success, msg = dao.gui_yeu_cau_gia_han(user.id, phieu.id)
+    assert success is False
+    assert msg == "Chỉ sách đang được mượn mới có thể yêu cầu gia hạn!"
+
+def test_tu_choi_gia_han_khi_khong_cho_gia_han(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach3"]
+    dao.dang_ky_muon_sach(user.id, sach.id)
+    phieu = PhieuMuon.query.filter_by(user_id=user.id, sach_id=sach.id).first()
+
+    success, msg = dao.tu_choi_gia_han(phieu.id)
+    assert success is False
+    assert msg == "Yêu cầu này không ở trạng thái chờ gia hạn!"
+
+def test_huy_phieu_qua_han_chua_den_han(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach3"]
+    dao.dang_ky_muon_sach(user.id, sach.id)
+    phieu = PhieuMuon.query.filter_by(user_id=user.id, sach_id=sach.id).first()
+    dao.duyet_phieu_muon(phieu.id)
+    phieu.ngayDuyet = datetime.now() - timedelta(days=1)
+    db.session.commit()
+
+    success, msg = dao.huy_phieu_qua_han(phieu.id)
+    assert success is False
+    assert msg == "Yêu cầu này chưa quá hạn nhận sách!"
+
+def test_huy_phieu_qua_han_sai_trang_thai(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach3"]
+    dao.dang_ky_muon_sach(user.id, sach.id)
+    phieu = PhieuMuon.query.filter_by(user_id=user.id, sach_id=sach.id).first()
+
+    success, msg = dao.huy_phieu_qua_han(phieu.id)
+    assert success is False
+    assert msg == "Yêu cầu này không ở trạng thái chờ nhận sách!"
+
+def test_huy_phieu_qua_han_chua_co_ngay_duyet(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach3"]
+    phieu = PhieuMuon(
+        user_id=user.id,
+        sach_id=sach.id,
+        trangThai=TrangThaiMuon.DA_DUYET,
+        ngayDuyet=None
+    )
+    db.session.add(phieu)
+    db.session.commit()
+
+    success, msg = dao.huy_phieu_qua_han(phieu.id)
+    assert success is False
+    assert msg == "Phiếu chưa có ngày duyệt!"
+
+def test_get_phieu_muon_da_tra_cua_doc_gia(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach3"]
+    dao.dang_ky_muon_sach(user.id, sach.id)
+    phieu = PhieuMuon.query.filter_by(user_id=user.id, sach_id=sach.id).first()
+    dao.duyet_phieu_muon(phieu.id)
+    dao.tra_sach(user.id, phieu.id)
+
+    result = dao.get_phieu_muon_da_tra_cua_doc_gia(user.id)
+    assert any(p.id == phieu.id for p in result)
+
+def test_get_phieu_muon_qua_han_cua_doc_gia(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach3"]
+    dao.dang_ky_muon_sach(user.id, sach.id)
+    phieu = PhieuMuon.query.filter_by(user_id=user.id, sach_id=sach.id).first()
+    dao.duyet_phieu_muon(phieu.id)
+    phieu.hanTra = datetime.now() - timedelta(days=1)
+    db.session.commit()
+
+    result = dao.get_phieu_muon_qua_han_cua_doc_gia(user.id)
+    assert any(p.id == phieu.id for p in result)

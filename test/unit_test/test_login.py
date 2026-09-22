@@ -1,7 +1,6 @@
 import pytest
-from app import dao
-from app.models import User
-
+from app import dao, db
+from app.models import User, UserRole, OAuthProvider
 def test_dao_dang_nhap_thanh_cong(seed_data):
     user, msg = dao.dang_nhap("docgia_test", "Password123!")
     assert user is not None
@@ -65,3 +64,29 @@ def test_dao_dat_lai_mat_khau(seed_data):
     # Test logging in with new password
     user, _ = dao.dang_nhap("docgia_test", "NewPassword123!")
     assert user is not None
+
+
+def test_dang_nhap_hoac_tao_oauth_tao_moi(seed_data):
+    user, created = dao.dang_nhap_hoac_tao_tai_khoan_oauth(
+        OAuthProvider.GOOGLE, "oauth-new-001", "oauthnew@test.com", "OAuth New", "avatar.jpg"
+    )
+    assert created is True
+    assert user.role == UserRole.DOCGIA
+    assert user.email == "oauthnew@test.com"
+    assert user.oauthId == "oauth-new-001"
+    assert user.avatar == "avatar.jpg"
+
+def test_dang_nhap_hoac_tao_oauth_cap_nhat_tai_khoan_theo_email(seed_data):
+    user = seed_data["docgia"]
+    user.avatar = None
+    db.session.commit()
+    found, created = dao.dang_nhap_hoac_tao_tai_khoan_oauth(
+        OAuthProvider.FACEBOOK, "fb-new-001", user.email, user.hoTen, "fb-avatar.jpg"
+    )
+    assert created is False
+    assert found.id == user.id
+    assert found.oauthId == "fb-new-001"
+    assert found.avatar == "fb-avatar.jpg"
+
+def test_get_thong_tin_ho_so_khong_ton_tai(seed_data):
+    assert dao.get_thong_tin_ho_so(999999) == {}

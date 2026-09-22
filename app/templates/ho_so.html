@@ -29,11 +29,13 @@
         </div>
 
         <div class="lg:col-span-2 space-y-6">
+            {% if current_user.role.name == 'DOCGIA' %}
             <div class="grid sm:grid-cols-3 gap-4">
                 <div class="bg-white rounded-2xl border p-5"><p class="text-sm text-slate-500">Tổng phiếu mượn</p><p class="text-3xl font-extrabold mt-2">{{ thong_ke.tong_phieu_muon }}</p></div>
                 <div class="bg-white rounded-2xl border p-5"><p class="text-sm text-slate-500">Đang mượn</p><p class="text-3xl font-extrabold text-emerald-600 mt-2">{{ thong_ke.dang_muon }}</p></div>
                 <div class="bg-white rounded-2xl border p-5"><p class="text-sm text-slate-500">Sách yêu thích</p><p class="text-3xl font-extrabold text-rose-500 mt-2">{{ thong_ke.yeu_thich }}</p></div>
             </div>
+            {% endif %}
 
             {% if current_user.role.name == 'DOCGIA' %}
             <div class="bg-white rounded-2xl border p-6">

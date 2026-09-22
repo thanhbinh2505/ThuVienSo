@@ -5,9 +5,9 @@
 <section class="relative pt-32 pb-16 bg-gradient-to-br from-lightBg via-white to-white overflow-hidden">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
        <div class="max-w-3xl mx-auto">
-            <div class="flex justify-center gap-3 mb-4">
-                <button id="normalSearch" type="button" class="px-4 py-2 rounded-lg bg-primary text-white font-semibold">🔍 Tìm kiếm thường</button>
-                <button id="semanticSearch" type="button" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 font-semibold">✨ Tìm kiếm ngữ nghĩa</button>
+            <div class="inline-flex p-1 rounded-full bg-slate-100 mb-5">
+                <button id="normalSearch" type="button" class="px-5 py-2 rounded-full bg-primary text-white font-semibold text-sm transition-all">🔍 Tìm kiếm thường</button>
+                <button id="semanticSearch" type="button" class="px-5 py-2 rounded-full text-slate-500 font-semibold text-sm transition-all">✨ Tìm kiếm ngữ nghĩa</button>
             </div>
             <div id="tim-kiem" class="bg-white p-3 rounded-2xl shadow-soft border border-gray-100 flex flex-col sm:flex-row gap-3">
                 <div class="relative flex-1">
@@ -22,6 +22,7 @@
                 </select>
                 <button id="btnSearch" class="bg-primary hover:bg-primaryHover text-white px-6 py-3.5 rounded-xl font-semibold shadow-btn transition-all shrink-0">Tìm kiếm</button>
             </div>
+            <p id="semanticHint" class="hidden mt-3 text-sm text-slate-400">Mô tả điều bạn muốn đọc bằng ngôn ngữ tự nhiên, AI sẽ hiểu ý nghĩa thay vì chỉ khớp từ khóa.</p>
         </div>
     </div>
 </section>
@@ -77,7 +78,7 @@
 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 
 {% if current_user.is_authenticated and sach_goi_y %}
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+<section id="goiYSection" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
     <div class="flex items-center gap-3 mb-6">
         <div class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
             <i data-lucide="sparkles" class="w-6 h-6 text-primary"></i>

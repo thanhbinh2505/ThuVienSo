@@ -1,5 +1,6 @@
 import pytest
 from app import dao
+from app.models import  DanhGia
 
 def test_get_sach_by_id_hop_le(seed_data):
     sach1 = seed_data['sach1']
@@ -55,3 +56,18 @@ def test_them_va_xoa_binh_luan(seed_data):
     # Xóa bình luận
     del_success, del_msg = dao.xoa_binh_luan(docgia.id, bl.id)
     assert del_success is True
+def test_danh_gia_sach_cap_nhat_danh_gia_cu(seed_data):
+    user = seed_data["docgia"]
+    sach = seed_data["sach1"]
+    assert dao.danh_gia_sach(user.id, sach.id, 2)[0] is True
+    assert dao.danh_gia_sach(user.id, sach.id, 5)[0] is True
+    rating = DanhGia.query.filter_by(user_id=user.id, sach_id=sach.id).first()
+    assert rating.soSao == 5
+    assert sach.soLuotDanhGia == 1
+    assert sach.diemDanhGiaTB == 5
+
+def test_danh_gia_sach_khong_ton_tai(seed_data):
+    user = seed_data["docgia"]
+    success, msg = dao.danh_gia_sach(user.id, 999999, 5)
+    assert success is False
+    assert msg == "Không tìm thấy sách!"
